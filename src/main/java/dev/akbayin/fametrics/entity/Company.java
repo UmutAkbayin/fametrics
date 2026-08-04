@@ -26,4 +26,5 @@ public class Company {
     private String ticker;
     private BigDecimal eps;
     private BigDecimal bvps;
+    private BigDecimal sharePrice;
 }
