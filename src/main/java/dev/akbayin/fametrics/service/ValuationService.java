@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,21 +16,46 @@ import java.util.Optional;
 public class ValuationService {
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
+    private static final int SCALE = 6;
 
     public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
-        if (request.eps() == null ||
-            request.bvps() == null ||
-            request.eps().compareTo(BigDecimal.ZERO) <= 0 ||
-            request.bvps().compareTo(BigDecimal.ZERO) <= 0) {
+        var eps = request.eps();
+        var bvps = request.bvps();
+
+        if (anyNonPositive(eps, bvps)) {
             return Optional.empty();
         }
 
         BigDecimal product = MULTIPLIER
-            .multiply(request.eps())
-            .multiply(request.bvps());
+            .multiply(eps)
+            .multiply(bvps);
 
-        return Optional.of(product.sqrt(new MathContext(6, RoundingMode.HALF_UP)));
+        BigDecimal result = product
+            .sqrt(MathContext.DECIMAL64)
+            .setScale(SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
     }
 
+    public Optional<BigDecimal> calculatePeTtm(PeTtmRequest request) {
+        var sharePrice = request.sharePrice();
+        var eps = request.eps();
 
+        if (anyNonPositive(sharePrice, eps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = sharePrice.divide(eps, SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    private static boolean anyNonPositive(BigDecimal... values) {
+        for (BigDecimal value : values) {
+            if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
