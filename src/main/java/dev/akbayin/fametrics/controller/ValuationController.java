@@ -1,11 +1,11 @@
 package dev.akbayin.fametrics.controller;
 
+import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.entity.Company;
 import dev.akbayin.fametrics.service.ValuationService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +21,12 @@ public class ValuationController {
     private final ValuationService valuationService;
 
     @PostMapping("/graham")
-    public ResponseEntity<BigDecimal> getValuation(@RequestBody Company company) {
+    public ResponseEntity<BigDecimal> getValuation(@Valid @RequestBody GrahamRequest request) {
+        Company company = Company.builder()
+            .eps(request.eps())
+            .bvps(request.bvps())
+            .build();
+
         return valuationService.calculateGrahamNumber(company)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
