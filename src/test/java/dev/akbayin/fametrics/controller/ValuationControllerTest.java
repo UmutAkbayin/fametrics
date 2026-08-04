@@ -80,7 +80,7 @@ class ValuationControllerTest {
         var request = new PeTtmRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
 
         when(valuationService.calculatePeTtm(any(PeTtmRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("13.378157")));
+            .thenReturn(Optional.of(new BigDecimal("13.781570")));
 
         restTestClient.post().uri("/api/metrics/pe-ttm")
             .contentType(MediaType.APPLICATION_JSON)
