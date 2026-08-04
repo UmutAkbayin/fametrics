@@ -36,7 +36,7 @@ class ValuationServiceTest {
             new BigDecimal("3.53")
         ));
 
-        assertThat(result).contains(new BigDecimal("8.40763"));
+        assertThat(result).contains(new BigDecimal("8.407630"));
     }
 
     private static Stream<Arguments> provideInvalidCompanies() {
