@@ -1,7 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
-import dev.akbayin.fametrics.entity.Company;
+import dev.akbayin.fametrics.dto.PeTtmRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +22,7 @@ class ValuationServiceTest {
     ValuationService valuationService;
 
     @ParameterizedTest
-    @MethodSource("provideInvalidCompanies")
+    @MethodSource("provideInvalidMetrics")
     void calculateGrahamNumber_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal bvps) {
         var result = valuationService.calculateGrahamNumber(new GrahamRequest(eps, bvps));
 
@@ -39,7 +39,25 @@ class ValuationServiceTest {
         assertThat(result).contains(new BigDecimal("8.407630"));
     }
 
-    private static Stream<Arguments> provideInvalidCompanies() {
+    @ParameterizedTest
+    @MethodSource("provideInvalidMetrics")
+    void calculatePeTtm_whenInputIsInvalid_shouldReturnEmpty(BigDecimal sharePrice, BigDecimal eps) {
+        var result = valuationService.calculatePeTtm(new PeTtmRequest(sharePrice, eps));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculatePeTtm_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculatePeTtm(new PeTtmRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93")
+        ));
+
+        assertThat(result).contains(new BigDecimal("13.781570"));
+    }
+
+    private static Stream<Arguments> provideInvalidMetrics() {
         return Stream.of(
             Arguments.of(null, new BigDecimal("10.0")),
             Arguments.of(new BigDecimal("2.5"), null),
