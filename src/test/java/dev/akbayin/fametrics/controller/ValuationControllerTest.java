@@ -53,7 +53,9 @@ class ValuationControllerTest {
             .body(request)
             .exchange()
             .expectStatus()
-            .isBadRequest();
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.eps").isNotEmpty();
 
         verifyNoInteractions(valuationService);
     }
