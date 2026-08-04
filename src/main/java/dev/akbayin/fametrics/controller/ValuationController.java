@@ -22,12 +22,7 @@ public class ValuationController {
 
     @PostMapping("/graham")
     public ResponseEntity<BigDecimal> getValuation(@Valid @RequestBody GrahamRequest request) {
-        Company company = Company.builder()
-            .eps(request.eps())
-            .bvps(request.bvps())
-            .build();
-
-        return valuationService.calculateGrahamNumber(company)
+        return valuationService.calculateGrahamNumber(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }

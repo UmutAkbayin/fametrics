@@ -33,7 +33,7 @@ class ValuationControllerTest {
     void getValuation_withValidRequest_shouldReturnStatus200() {
         var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
 
-        when(valuationService.calculateGrahamNumber(any(Company.class)))
+        when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
             .thenReturn(Optional.of(new BigDecimal("56.05000")));
 
         restTestClient.post().uri("/api/metrics/graham")
@@ -64,7 +64,7 @@ class ValuationControllerTest {
     void getValuation_whenServiceReturnsEmpty_shouldReturnStatus422() {
         var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
 
-        when(valuationService.calculateGrahamNumber(any(Company.class)))
+        when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/graham")

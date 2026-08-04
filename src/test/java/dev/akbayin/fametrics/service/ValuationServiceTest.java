@@ -1,5 +1,6 @@
 package dev.akbayin.fametrics.service;
 
+import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.entity.Company;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,24 +24,17 @@ class ValuationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInvalidCompanies")
     void calculateGrahamNumber_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal bvps) {
-        Company company = Company.builder()
-            .eps(eps)
-            .bvps(bvps)
-            .build();
-
-        var result = valuationService.calculateGrahamNumber(company);
+        var result = valuationService.calculateGrahamNumber(new GrahamRequest(eps, bvps));
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void calculateGrahamNumber_whenInputIsValid_shouldReturnValue() {
-        Company company = Company.builder()
-            .eps(new BigDecimal("0.89"))
-            .bvps(new BigDecimal("3.53"))
-            .build();
-
-        var result = valuationService.calculateGrahamNumber(company);
+        var result = valuationService.calculateGrahamNumber(new GrahamRequest(
+            new BigDecimal("0.89"),
+            new BigDecimal("3.53")
+        ));
 
         assertThat(result).contains(new BigDecimal("8.40763"));
     }
