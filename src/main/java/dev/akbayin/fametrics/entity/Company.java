@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Builder
+@Builder(toBuilder = true)
 @Entity
 @Getter
 @AllArgsConstructor
