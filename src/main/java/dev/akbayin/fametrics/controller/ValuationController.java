@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/valuation")
+@RequestMapping("/api/metrics")
 public class ValuationController {
 
     private final ValuationService valuationService;
