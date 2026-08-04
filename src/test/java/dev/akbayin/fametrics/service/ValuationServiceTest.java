@@ -22,7 +22,7 @@ class ValuationServiceTest {
     ValuationService valuationService;
 
     @ParameterizedTest
-    @MethodSource("provideInvalidMetrics")
+    @MethodSource("provideInvalidBigDecimalPairs")
     void calculateGrahamNumber_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal bvps) {
         var result = valuationService.calculateGrahamNumber(new GrahamRequest(eps, bvps));
 
@@ -40,7 +40,7 @@ class ValuationServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideInvalidMetrics")
+    @MethodSource("provideInvalidBigDecimalPairs")
     void calculatePeTtm_whenInputIsInvalid_shouldReturnEmpty(BigDecimal sharePrice, BigDecimal eps) {
         var result = valuationService.calculatePeTtm(new PeTtmRequest(sharePrice, eps));
 
@@ -57,7 +57,7 @@ class ValuationServiceTest {
         assertThat(result).contains(new BigDecimal("13.781570"));
     }
 
-    private static Stream<Arguments> provideInvalidMetrics() {
+    private static Stream<Arguments> provideInvalidBigDecimalPairs() {
         return Stream.of(
             Arguments.of(null, new BigDecimal("10.0")),
             Arguments.of(new BigDecimal("2.5"), null),
