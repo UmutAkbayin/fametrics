@@ -1,7 +1,7 @@
 package dev.akbayin.fametrics.controller;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
-import dev.akbayin.fametrics.entity.Company;
+import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -21,8 +21,15 @@ public class ValuationController {
     private final ValuationService valuationService;
 
     @PostMapping("/graham")
-    public ResponseEntity<BigDecimal> getValuation(@Valid @RequestBody GrahamRequest request) {
+    public ResponseEntity<BigDecimal> getGrahamNumber(@Valid @RequestBody GrahamRequest request) {
         return valuationService.calculateGrahamNumber(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+    
+    @PostMapping("/pe-ttm")
+    public ResponseEntity<BigDecimal> getPeTtm(@Valid @RequestBody PeTtmRequest request) {
+        return valuationService.calculatePeTtm(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
