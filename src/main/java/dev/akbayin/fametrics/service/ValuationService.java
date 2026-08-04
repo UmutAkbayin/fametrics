@@ -2,7 +2,6 @@ package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
-import dev.akbayin.fametrics.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
