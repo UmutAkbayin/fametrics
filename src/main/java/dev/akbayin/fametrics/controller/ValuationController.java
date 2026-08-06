@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.controller;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
@@ -46,6 +47,13 @@ public class ValuationController {
     @PostMapping("/ps")
     public ResponseEntity<BigDecimal> getPsRatio(@Valid @RequestBody PsRatioRequest request) {
         return valuationService.calculatePsRatio(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/peg")
+    public ResponseEntity<BigDecimal> getPegRatio(@Valid @RequestBody PegRatioRequest request) {
+        return valuationService.calculatePegRatio(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
