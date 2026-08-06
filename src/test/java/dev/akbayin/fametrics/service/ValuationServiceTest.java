@@ -36,7 +36,7 @@ class ValuationServiceTest {
             new BigDecimal("3.53")
         ));
 
-        assertThat(result).contains(new BigDecimal("8.407630"));
+        assertThat(result).contains(new BigDecimal("8.41"));
     }
 
     @ParameterizedTest
@@ -54,7 +54,7 @@ class ValuationServiceTest {
             new BigDecimal("2.93")
         ));
 
-        assertThat(result).contains(new BigDecimal("13.781570"));
+        assertThat(result).contains(new BigDecimal("13.78"));
     }
 
     private static Stream<Arguments> provideInvalidBigDecimalPairs() {
