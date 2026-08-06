@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.controller;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,6 +162,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/pb")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getPsRatio_withValidRequest_shouldReturnStatus200() {
+        var request = new PsRatioRequest(new BigDecimal("50"), new BigDecimal("100"));
+
+        when(valuationService.calculatePsRatio(any(PsRatioRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("0.5")));
+
+        restTestClient.post().uri("/api/metrics/ps")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getPsRatio_withNonPositiveMarketCap_shouldReturnStatus400() {
+        var request = new PbRatioRequest(BigDecimal.ZERO, new BigDecimal("100"));
+
+        restTestClient.post().uri("/api/metrics/ps")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.marketCap").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getPsRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new PsRatioRequest(new BigDecimal("50"), new BigDecimal("100"));
+
+        when(valuationService.calculatePsRatio(any(PsRatioRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/ps")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
