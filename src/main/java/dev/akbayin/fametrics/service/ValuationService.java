@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.util.Optional;
 public class ValuationService {
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
-    private static final int SCALE = 6;
+    private static final int SCALE = 2;
 
     public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
         var eps = request.eps();
@@ -45,6 +46,19 @@ public class ValuationService {
         }
 
         BigDecimal result = sharePrice.divide(eps, SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    public Optional<BigDecimal> calculatePbRatio(PbRatioRequest request) {
+        var sharePrice = request.sharePrice();
+        var bvps = request.bvps();
+
+        if (anyNonPositive(sharePrice, bvps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = sharePrice.divide(bvps, SCALE, RoundingMode.HALF_UP);
 
         return Optional.of(result);
     }
