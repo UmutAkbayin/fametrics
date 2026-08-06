@@ -174,7 +174,7 @@ class ValuationControllerTest {
         var request = new PsRatioRequest(new BigDecimal("50"), new BigDecimal("100"));
 
         when(valuationService.calculatePsRatio(any(PsRatioRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("0.5")));
+            .thenReturn(Optional.of(new BigDecimal("0.50")));
 
         restTestClient.post().uri("/api/metrics/ps")
             .contentType(MediaType.APPLICATION_JSON)
