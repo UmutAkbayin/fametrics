@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,24 @@ class ValuationServiceTest {
     @Test
     void calculatePeTtm_whenInputIsValid_shouldReturnValue() {
         var result = valuationService.calculatePeTtm(new PeTtmRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93")
+        ));
+
+        assertThat(result).contains(new BigDecimal("13.78"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidBigDecimalPairs")
+    void calculatePbRatio_whenInputIsInvalid_shouldReturnEmpty(BigDecimal sharePrice, BigDecimal bvps) {
+        var result = valuationService.calculatePbRatio(new PbRatioRequest(sharePrice, bvps));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculatePbRatio_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculatePbRatio(new PbRatioRequest(
             new BigDecimal("40.38"),
             new BigDecimal("2.93")
         ));
