@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.controller;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -255,6 +256,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/peg")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getLynchFairValue_withValidRequest_shouldReturnStatus200() {
+        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"));
+
+        when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("43.95")));
+
+        restTestClient.post().uri("/api/metrics/lynch")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getLynchFairValue_withNonPositiveEps_shouldReturnStatus400() {
+        var request = new LynchFairValueRequest(BigDecimal.ZERO, new BigDecimal("0.15"));
+
+        restTestClient.post().uri("/api/metrics/lynch")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.eps").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getLynchFairValue_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"));
+
+        when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/lynch")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()

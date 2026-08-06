@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -115,6 +116,24 @@ class ValuationServiceTest {
         assertThat(result).contains(new BigDecimal("0.92"));
     }
 
+    @ParameterizedTest
+    @MethodSource("provideInvalidLynchFairValueInputs")
+    void calculateLynchFairValue_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal epsGrowthRate) {
+        var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(eps, epsGrowthRate));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculateLynchFairValue_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(
+            new BigDecimal("2.93"),
+            new BigDecimal("0.15")
+        ));
+
+        assertThat(result).contains(new BigDecimal("43.95"));
+    }
+
     private static Stream<Arguments> provideInvalidBigDecimalPairs() {
         return Stream.of(
             Arguments.of(null, new BigDecimal("10.0")),
@@ -125,6 +144,15 @@ class ValuationServiceTest {
 
             Arguments.of(new BigDecimal("-1.5"), new BigDecimal("10.0")),
             Arguments.of(new BigDecimal("2.5"), new BigDecimal("-5.0"))
+        );
+    }
+
+    private static Stream<Arguments> provideInvalidLynchFairValueInputs() {
+        return Stream.of(
+            Arguments.of(null, new BigDecimal("0.15")),
+            Arguments.of(BigDecimal.ZERO, new BigDecimal("0.15")),
+            Arguments.of(new BigDecimal("-2.93"), new BigDecimal("0.15")),
+            Arguments.of(new BigDecimal("2.93"), null)
         );
     }
 }
