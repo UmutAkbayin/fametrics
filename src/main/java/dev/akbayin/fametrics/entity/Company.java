@@ -24,6 +24,8 @@ public class Company {
 
     private String name;
     private String ticker;
+    private BigDecimal marketCap;
+    private BigDecimal totalRevenue;
     private BigDecimal eps;
     private BigDecimal bvps;
     private BigDecimal sharePrice;
