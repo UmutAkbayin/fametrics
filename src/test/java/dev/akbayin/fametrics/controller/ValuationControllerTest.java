@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.controller;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class ValuationControllerTest {
         var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
 
         when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("56.05000")));
+            .thenReturn(Optional.of(new BigDecimal("56.05")));
 
         restTestClient.post().uri("/api/metrics/graham")
             .contentType(MediaType.APPLICATION_JSON)
@@ -80,7 +81,7 @@ class ValuationControllerTest {
         var request = new PeTtmRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
 
         when(valuationService.calculatePeTtm(any(PeTtmRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("13.781570")));
+            .thenReturn(Optional.of(new BigDecimal("13.78")));
 
         restTestClient.post().uri("/api/metrics/pe-ttm")
             .contentType(MediaType.APPLICATION_JSON)
@@ -114,6 +115,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/pe-ttm")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getPbRatio_withValidRequest_shouldReturnStatus200() {
+        var request = new PbRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
+
+        when(valuationService.calculatePbRatio(any(PbRatioRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("13.78")));
+
+        restTestClient.post().uri("/api/metrics/pb")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getPbRatio_withNonPositiveBvps_shouldReturnStatus400() {
+        var request = new PbRatioRequest(BigDecimal.ZERO, new BigDecimal("2.93"));
+
+        restTestClient.post().uri("/api/metrics/pb")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.sharePrice").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getPbRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new PbRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
+
+        when(valuationService.calculatePbRatio(any(PbRatioRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/pb")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
