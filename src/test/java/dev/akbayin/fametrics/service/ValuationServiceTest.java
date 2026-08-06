@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.service;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,6 +94,25 @@ class ValuationServiceTest {
         ));
 
         assertThat(result).contains(new BigDecimal("0.50"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidBigDecimalPairs")
+    void calculatePegRatio_whenInputIsInvalid_shouldReturnEmpty(BigDecimal sharePrice, BigDecimal eps) {
+        var result = valuationService.calculatePegRatio(new PegRatioRequest(sharePrice, eps, new BigDecimal("0.15")));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculatePegRatio_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculatePegRatio(new PegRatioRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93"),
+            new BigDecimal("0.15")
+        ));
+
+        assertThat(result).contains(new BigDecimal("0.92"));
     }
 
     private static Stream<Arguments> provideInvalidBigDecimalPairs() {
