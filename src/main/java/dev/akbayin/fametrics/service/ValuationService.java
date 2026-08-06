@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -84,6 +85,21 @@ public class ValuationService {
 
         return peRatio.map(pe ->
             pe.divide(epsGrowthRate.multiply(new BigDecimal("100")), SCALE, RoundingMode.HALF_UP));
+    }
+
+    public Optional<BigDecimal> calculateLynchFairValue(LynchFairValueRequest request) {
+        var eps = request.eps();
+        var epsGrowthRate = request.epsGrowthRate();
+
+        if (eps == null || eps.compareTo(BigDecimal.ZERO) <= 0 || epsGrowthRate == null) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = eps
+            .multiply(epsGrowthRate.multiply(new BigDecimal("100")))
+            .setScale(SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
     }
 
     private static boolean anyNonPositive(BigDecimal... values) {
