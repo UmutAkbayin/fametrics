@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.service;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PsRatioRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -74,6 +75,24 @@ class ValuationServiceTest {
         ));
 
         assertThat(result).contains(new BigDecimal("13.78"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidBigDecimalPairs")
+    void calculatePsRatio_whenInputIsInvalid_shouldReturnEmpty(BigDecimal marketCap, BigDecimal totalRevenue) {
+        var result = valuationService.calculatePsRatio(new PsRatioRequest(marketCap, totalRevenue));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculatePsRatio_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculatePsRatio(new PsRatioRequest(
+            new BigDecimal("50"),
+            new BigDecimal("100")
+        ));
+
+        assertThat(result).contains(new BigDecimal("0.50"));
     }
 
     private static Stream<Arguments> provideInvalidBigDecimalPairs() {
