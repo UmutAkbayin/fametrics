@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.service;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -75,6 +76,14 @@ public class ValuationService {
         BigDecimal result = marketCap.divide(totalRevenue, SCALE, RoundingMode.HALF_UP);
 
         return Optional.of(result);
+    }
+
+    public Optional<BigDecimal> calculatePegRatio(PegRatioRequest request) {
+        var peRatio = calculatePeTtm(new PeTtmRequest(request.sharePrice(), request.eps()));
+        var epsGrowthRate = request.epsGrowthRate();
+
+        return peRatio.map(pe ->
+            pe.divide(epsGrowthRate.multiply(new BigDecimal("100")), SCALE, RoundingMode.HALF_UP));
     }
 
     private static boolean anyNonPositive(BigDecimal... values) {
