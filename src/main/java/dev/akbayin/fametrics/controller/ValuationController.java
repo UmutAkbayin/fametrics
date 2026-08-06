@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.controller;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
@@ -30,6 +31,13 @@ public class ValuationController {
     @PostMapping("/pe-ttm")
     public ResponseEntity<BigDecimal> getPeTtm(@Valid @RequestBody PeTtmRequest request) {
         return valuationService.calculatePeTtm(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/pb")
+    public ResponseEntity<BigDecimal> getPbRatio(@Valid @RequestBody PbRatioRequest request) {
+        return valuationService.calculatePbRatio(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
