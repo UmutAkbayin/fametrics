@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.controller;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
@@ -208,6 +209,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/ps")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getPegRatio_withValidRequest_shouldReturnStatus200() {
+        var request = new PegRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"), new BigDecimal("0.15"));
+
+        when(valuationService.calculatePegRatio(any(PegRatioRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("0.92")));
+
+        restTestClient.post().uri("/api/metrics/peg")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getPegRatio_withNonPositiveSharePrice_shouldReturnStatus400() {
+        var request = new PegRatioRequest(BigDecimal.ZERO, new BigDecimal("2.93"), new BigDecimal("0.15"));
+
+        restTestClient.post().uri("/api/metrics/peg")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.sharePrice").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getPegRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new PegRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"), new BigDecimal("0.15"));
+
+        when(valuationService.calculatePegRatio(any(PegRatioRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/peg")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
