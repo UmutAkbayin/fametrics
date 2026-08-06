@@ -29,4 +29,5 @@ public class Company {
     private BigDecimal eps;
     private BigDecimal bvps;
     private BigDecimal sharePrice;
+    private BigDecimal epsGrowthRate;
 }
