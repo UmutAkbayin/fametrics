@@ -1,5 +1,6 @@
 package dev.akbayin.fametrics.service;
 
+import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
@@ -114,6 +115,24 @@ class ValuationServiceTest {
         ));
 
         assertThat(result).contains(new BigDecimal("0.92"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidBigDecimalPairs")
+    void calculateDeRatio_whenInputIsInvalid_shouldReturnEmpty(BigDecimal totalLiabilities, BigDecimal totalEquity) {
+        var result = valuationService.calculateDeRatio(new DeRatioRequest(totalLiabilities, totalEquity));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculateDeRatio_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculateDeRatio(new DeRatioRequest(
+            new BigDecimal("150000"),
+            new BigDecimal("100000")
+        ));
+
+        assertThat(result).contains(new BigDecimal("1.50"));
     }
 
     @ParameterizedTest
