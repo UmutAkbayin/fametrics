@@ -7,6 +7,7 @@ import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
+import dev.akbayin.fametrics.dto.RoeRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -56,6 +57,13 @@ public class ValuationController {
     @PostMapping("/de")
     public ResponseEntity<BigDecimal> getDeRatio(@Valid @RequestBody DeRatioRequest request) {
         return valuationService.calculateDeRatio(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/roe")
+    public ResponseEntity<BigDecimal> getRoe(@Valid @RequestBody RoeRequest request) {
+        return valuationService.calculateRoe(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
