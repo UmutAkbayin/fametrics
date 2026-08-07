@@ -1,5 +1,6 @@
 package dev.akbayin.fametrics.controller;
 
+import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
@@ -256,6 +257,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/peg")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getDeRatio_withValidRequest_shouldReturnStatus200() {
+        var request = new DeRatioRequest(new BigDecimal("150000"), new BigDecimal("100000"));
+
+        when(valuationService.calculateDeRatio(any(DeRatioRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("1.50")));
+
+        restTestClient.post().uri("/api/metrics/de")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getDeRatio_withNegativeTotalLiabilities_shouldReturnStatus400() {
+        var request = new DeRatioRequest(new BigDecimal("-1"), new BigDecimal("100000"));
+
+        restTestClient.post().uri("/api/metrics/de")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.totalLiabilities").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getDeRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new DeRatioRequest(new BigDecimal("150000"), new BigDecimal("100000"));
+
+        when(valuationService.calculateDeRatio(any(DeRatioRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/de")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
