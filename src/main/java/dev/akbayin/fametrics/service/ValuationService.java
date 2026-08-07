@@ -73,7 +73,8 @@ public class ValuationService {
         var totalLiabilities = request.totalLiabilities();
         var totalEquity = request.totalEquity();
 
-        if (anyNonPositive(totalLiabilities, totalEquity)) {
+        if (totalLiabilities == null || totalLiabilities.compareTo(BigDecimal.ZERO) < 0
+            || totalEquity == null || totalEquity.compareTo(BigDecimal.ZERO) <= 0) {
             return Optional.empty();
         }
 
