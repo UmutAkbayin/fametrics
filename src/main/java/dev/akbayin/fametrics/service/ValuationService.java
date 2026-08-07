@@ -7,6 +7,7 @@ import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
+import dev.akbayin.fametrics.dto.RoeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -79,6 +80,19 @@ public class ValuationService {
         }
 
         BigDecimal result = totalLiabilities.divide(totalEquity, SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    public Optional<BigDecimal> calculateRoe(RoeRequest request) {
+        var netIncome = request.netIncome();
+        var totalEquity = request.totalEquity();
+
+        if (netIncome == null || totalEquity == null || totalEquity.compareTo(BigDecimal.ZERO) <= 0) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = netIncome.divide(totalEquity, SCALE, RoundingMode.HALF_UP);
 
         return Optional.of(result);
     }
