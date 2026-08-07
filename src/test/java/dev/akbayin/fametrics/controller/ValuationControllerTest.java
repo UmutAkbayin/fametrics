@@ -7,6 +7,7 @@ import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
+import dev.akbayin.fametrics.dto.RoeRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -303,6 +304,52 @@ class ValuationControllerTest {
             .thenReturn(Optional.empty());
 
         restTestClient.post().uri("/api/metrics/de")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getRoe_withValidRequest_shouldReturnStatus200() {
+        var request = new RoeRequest(new BigDecimal("15000"), new BigDecimal("100000"));
+
+        when(valuationService.calculateRoe(any(RoeRequest.class)))
+            .thenReturn(Optional.of(new BigDecimal("0.15")));
+
+        restTestClient.post().uri("/api/metrics/roe")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk();
+    }
+
+    @Test
+    void getRoe_withNonPositiveTotalEquity_shouldReturnStatus400() {
+        var request = new RoeRequest(new BigDecimal("15000"), BigDecimal.ZERO);
+
+        restTestClient.post().uri("/api/metrics/roe")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isBadRequest()
+            .expectBody()
+            .jsonPath("$.totalEquity").isNotEmpty();
+
+        verifyNoInteractions(valuationService);
+    }
+
+    @Test
+    void getRoe_whenServiceReturnsEmpty_shouldReturnStatus422() {
+        var request = new RoeRequest(new BigDecimal("15000"), new BigDecimal("100000"));
+
+        when(valuationService.calculateRoe(any(RoeRequest.class)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics/roe")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
