@@ -32,4 +32,5 @@ public class Company {
     private BigDecimal epsGrowthRate;
     private BigDecimal totalLiabilities;
     private BigDecimal totalEquity;
+    private BigDecimal netIncome;
 }
