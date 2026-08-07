@@ -21,25 +21,6 @@ public class ValuationService {
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
 
-    public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
-        var eps = request.eps();
-        var bvps = request.bvps();
-
-        if (anyNonPositive(eps, bvps)) {
-            return Optional.empty();
-        }
-
-        BigDecimal product = MULTIPLIER
-            .multiply(eps)
-            .multiply(bvps);
-
-        BigDecimal result = product
-            .sqrt(MathContext.DECIMAL64)
-            .setScale(SCALE, RoundingMode.HALF_UP);
-
-        return Optional.of(result);
-    }
-
     public Optional<BigDecimal> calculatePeTtm(PeTtmRequest request) {
         var sharePrice = request.sharePrice();
         var eps = request.eps();
@@ -85,6 +66,25 @@ public class ValuationService {
 
         return peRatio.map(pe ->
             pe.divide(epsGrowthRate.multiply(new BigDecimal("100")), SCALE, RoundingMode.HALF_UP));
+    }
+
+    public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
+        var eps = request.eps();
+        var bvps = request.bvps();
+
+        if (anyNonPositive(eps, bvps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal product = MULTIPLIER
+            .multiply(eps)
+            .multiply(bvps);
+
+        BigDecimal result = product
+            .sqrt(MathContext.DECIMAL64)
+            .setScale(SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
     }
 
     public Optional<BigDecimal> calculateLynchFairValue(LynchFairValueRequest request) {

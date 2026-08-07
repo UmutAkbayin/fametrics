@@ -23,13 +23,6 @@ import java.math.BigDecimal;
 public class ValuationController {
 
     private final ValuationService valuationService;
-
-    @PostMapping("/graham")
-    public ResponseEntity<BigDecimal> getGrahamNumber(@Valid @RequestBody GrahamRequest request) {
-        return valuationService.calculateGrahamNumber(request)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.unprocessableContent().build());
-    }
     
     @PostMapping("/pe-ttm")
     public ResponseEntity<BigDecimal> getPeTtm(@Valid @RequestBody PeTtmRequest request) {
@@ -55,6 +48,13 @@ public class ValuationController {
     @PostMapping("/peg")
     public ResponseEntity<BigDecimal> getPegRatio(@Valid @RequestBody PegRatioRequest request) {
         return valuationService.calculatePegRatio(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/graham")
+    public ResponseEntity<BigDecimal> getGrahamNumber(@Valid @RequestBody GrahamRequest request) {
+        return valuationService.calculateGrahamNumber(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
