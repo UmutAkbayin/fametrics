@@ -7,6 +7,7 @@ import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
+import dev.akbayin.fametrics.dto.RoeRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -136,6 +137,34 @@ class ValuationServiceTest {
     }
 
     @ParameterizedTest
+    @MethodSource("provideInvalidRoeInputs")
+    void calculateRoe_whenInputIsInvalid_shouldReturnEmpty(BigDecimal netIncome, BigDecimal totalEquity) {
+        var result = valuationService.calculateRoe(new RoeRequest(netIncome, totalEquity));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void calculateRoe_whenInputIsValid_shouldReturnValue() {
+        var result = valuationService.calculateRoe(new RoeRequest(
+            new BigDecimal("15000"),
+            new BigDecimal("100000")
+        ));
+
+        assertThat(result).contains(new BigDecimal("0.15"));
+    }
+
+    @Test
+    void calculateRoe_whenNetIncomeIsNegative_shouldReturnNegativeValue() {
+        var result = valuationService.calculateRoe(new RoeRequest(
+            new BigDecimal("-15000"),
+            new BigDecimal("100000")
+        ));
+
+        assertThat(result).contains(new BigDecimal("-0.15"));
+    }
+
+    @ParameterizedTest
     @MethodSource("provideInvalidLynchFairValueInputs")
     void calculateLynchFairValue_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal epsGrowthRate) {
         var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(eps, epsGrowthRate));
@@ -174,6 +203,16 @@ class ValuationServiceTest {
             Arguments.of(new BigDecimal("2.5"), BigDecimal.ZERO),
 
             Arguments.of(new BigDecimal("-1.5"), new BigDecimal("10.0")),
+            Arguments.of(new BigDecimal("2.5"), new BigDecimal("-5.0"))
+        );
+    }
+
+    private static Stream<Arguments> provideInvalidRoeInputs() {
+        return Stream.of(
+            Arguments.of(null, new BigDecimal("10.0")),
+            Arguments.of(new BigDecimal("2.5"), null),
+
+            Arguments.of(new BigDecimal("2.5"), BigDecimal.ZERO),
             Arguments.of(new BigDecimal("2.5"), new BigDecimal("-5.0"))
         );
     }
