@@ -118,7 +118,7 @@ class ValuationServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideInvalidBigDecimalPairs")
+    @MethodSource("provideInvalidDeRatioInputs")
     void calculateDeRatio_whenInputIsInvalid_shouldReturnEmpty(BigDecimal totalLiabilities, BigDecimal totalEquity) {
         var result = valuationService.calculateDeRatio(new DeRatioRequest(totalLiabilities, totalEquity));
 
@@ -159,6 +159,18 @@ class ValuationServiceTest {
             Arguments.of(new BigDecimal("2.5"), null),
 
             Arguments.of(BigDecimal.ZERO, new BigDecimal("10.0")),
+            Arguments.of(new BigDecimal("2.5"), BigDecimal.ZERO),
+
+            Arguments.of(new BigDecimal("-1.5"), new BigDecimal("10.0")),
+            Arguments.of(new BigDecimal("2.5"), new BigDecimal("-5.0"))
+        );
+    }
+
+    private static Stream<Arguments> provideInvalidDeRatioInputs() {
+        return Stream.of(
+            Arguments.of(null, new BigDecimal("10.0")),
+            Arguments.of(new BigDecimal("2.5"), null),
+
             Arguments.of(new BigDecimal("2.5"), BigDecimal.ZERO),
 
             Arguments.of(new BigDecimal("-1.5"), new BigDecimal("10.0")),
