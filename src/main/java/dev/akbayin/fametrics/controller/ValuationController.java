@@ -1,5 +1,6 @@
 package dev.akbayin.fametrics.controller;
 
+import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
@@ -48,6 +49,13 @@ public class ValuationController {
     @PostMapping("/peg")
     public ResponseEntity<BigDecimal> getPegRatio(@Valid @RequestBody PegRatioRequest request) {
         return valuationService.calculatePegRatio(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/de")
+    public ResponseEntity<BigDecimal> getDeRatio(@Valid @RequestBody DeRatioRequest request) {
+        return valuationService.calculateDeRatio(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
