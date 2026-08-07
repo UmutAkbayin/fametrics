@@ -1,5 +1,6 @@
 package dev.akbayin.fametrics.service;
 
+import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
@@ -66,6 +67,19 @@ public class ValuationService {
 
         return peRatio.map(pe ->
             pe.divide(epsGrowthRate.multiply(new BigDecimal("100")), SCALE, RoundingMode.HALF_UP));
+    }
+
+    public Optional<BigDecimal> calculateDeRatio(DeRatioRequest request) {
+        var totalLiabilities = request.totalLiabilities();
+        var totalEquity = request.totalEquity();
+
+        if (anyNonPositive(totalLiabilities, totalEquity)) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = totalLiabilities.divide(totalEquity, SCALE, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
     }
 
     public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
