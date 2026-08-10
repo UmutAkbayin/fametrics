@@ -86,8 +86,6 @@ public class ValuationController {
 
     @PostMapping("/summary")
     public ResponseEntity<SummaryResponse> getSummary(@Valid @RequestBody SummaryRequest request) {
-        return valuationService.calculateSummary(request)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.unprocessableContent().build());
+        return ResponseEntity.ok(valuationService.calculateSummary(request));
     }
 }
