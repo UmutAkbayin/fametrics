@@ -8,6 +8,8 @@ import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.RoeRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
+import dev.akbayin.fametrics.dto.SummaryResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -180,6 +182,69 @@ class ValuationServiceTest {
         ));
 
         assertThat(result).contains(new BigDecimal("43.95"));
+    }
+
+    @Test
+    void calculateSummary_whenAllInputsAreValid_shouldReturnFullyPopulatedResult() {
+        var result = valuationService.calculateSummary(new SummaryRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93"),
+            new BigDecimal("2.93"),
+            new BigDecimal("50"),
+            new BigDecimal("100"),
+            new BigDecimal("0.15"),
+            new BigDecimal("150000"),
+            new BigDecimal("100000"),
+            new BigDecimal("15000")
+        ));
+
+        assertThat(result).isEqualTo(new SummaryResponse(
+            new BigDecimal("13.78"),
+            new BigDecimal("13.78"),
+            new BigDecimal("0.50"),
+            new BigDecimal("0.92"),
+            new BigDecimal("1.50"),
+            new BigDecimal("0.15"),
+            new BigDecimal("13.90"),
+            new BigDecimal("43.95")
+        ));
+    }
+
+    @Test
+    void calculateSummary_whenSomeInputsAreInvalid_shouldReturnPartialResultWithNullFields() {
+        var result = valuationService.calculateSummary(new SummaryRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93"),
+            new BigDecimal("2.93"),
+            null,
+            new BigDecimal("100"),
+            null,
+            null,
+            new BigDecimal("100000"),
+            new BigDecimal("15000")
+        ));
+
+        assertThat(result).isEqualTo(new SummaryResponse(
+            new BigDecimal("13.78"),
+            new BigDecimal("13.78"),
+            null,
+            null,
+            null,
+            new BigDecimal("0.15"),
+            new BigDecimal("13.90"),
+            null
+        ));
+    }
+
+    @Test
+    void calculateSummary_whenAllInputsAreInvalid_shouldReturnAllNullFields() {
+        var result = valuationService.calculateSummary(new SummaryRequest(
+            null, null, null, null, null, null, null, null, null
+        ));
+
+        assertThat(result).isEqualTo(new SummaryResponse(
+            null, null, null, null, null, null, null, null
+        ));
     }
 
     private static Stream<Arguments> provideInvalidBigDecimalPairs() {
