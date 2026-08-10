@@ -92,7 +92,7 @@ public class ValuationService {
     public Optional<BigDecimal> calculatePegRatio(PegRatioRequest request) {
         var epsGrowthRate = request.epsGrowthRate();
 
-        if (epsGrowthRate == null || epsGrowthRate.compareTo(BigDecimal.ZERO) == 0) {
+        if (epsGrowthRate == null || epsGrowthRate.signum() <= 0) {
             return Optional.empty();
         }
 
@@ -106,8 +106,8 @@ public class ValuationService {
         var totalLiabilities = request.totalLiabilities();
         var totalEquity = request.totalEquity();
 
-        if (totalLiabilities == null || totalLiabilities.compareTo(BigDecimal.ZERO) < 0
-            || totalEquity == null || totalEquity.compareTo(BigDecimal.ZERO) <= 0) {
+        if (totalLiabilities == null || totalLiabilities.signum() < 0
+            || totalEquity == null || totalEquity.signum() <= 0) {
             return Optional.empty();
         }
 
@@ -120,7 +120,7 @@ public class ValuationService {
         var netIncome = request.netIncome();
         var totalEquity = request.totalEquity();
 
-        if (netIncome == null || totalEquity == null || totalEquity.compareTo(BigDecimal.ZERO) <= 0) {
+        if (netIncome == null || totalEquity == null || totalEquity.signum() <= 0) {
             return Optional.empty();
         }
 
@@ -152,7 +152,7 @@ public class ValuationService {
         var eps = request.eps();
         var epsGrowthRate = request.epsGrowthRate();
 
-        if (eps == null || eps.compareTo(BigDecimal.ZERO) <= 0 || epsGrowthRate == null) {
+        if (eps == null || eps.signum() <= 0 || epsGrowthRate == null) {
             return Optional.empty();
         }
 
@@ -165,7 +165,7 @@ public class ValuationService {
 
     private static boolean anyNonPositive(BigDecimal... values) {
         for (BigDecimal value : values) {
-            if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            if (value == null || value.signum() <= 0) {
                 return true;
             }
         }
