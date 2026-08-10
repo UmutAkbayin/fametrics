@@ -8,6 +8,7 @@ import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.RoeRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -78,6 +79,13 @@ public class ValuationController {
     @PostMapping("/lynch")
     public ResponseEntity<BigDecimal> getLynchFairValue(@Valid @RequestBody LynchFairValueRequest request) {
         return valuationService.calculateLynchFairValue(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/summary")
+    public ResponseEntity<BigDecimal> getSummary(@Valid @RequestBody SummaryRequest request) {
+        return valuationService.calculateSummary(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }
