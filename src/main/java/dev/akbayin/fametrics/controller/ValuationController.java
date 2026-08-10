@@ -9,6 +9,7 @@ import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.RoeRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
+import dev.akbayin.fametrics.dto.SummaryResponse;
 import dev.akbayin.fametrics.service.ValuationService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -84,7 +85,7 @@ public class ValuationController {
     }
 
     @PostMapping("/summary")
-    public ResponseEntity<BigDecimal> getSummary(@Valid @RequestBody SummaryRequest request) {
+    public ResponseEntity<SummaryResponse> getSummary(@Valid @RequestBody SummaryRequest request) {
         return valuationService.calculateSummary(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
