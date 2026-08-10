@@ -8,6 +8,8 @@ import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.RoeRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
+import dev.akbayin.fametrics.dto.SummaryResponse;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -401,5 +403,85 @@ class ValuationControllerTest {
             .exchange()
             .expectStatus()
             .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void getSummary_withValidRequest_shouldReturnStatus200() {
+        var request = new SummaryRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93"),
+            new BigDecimal("47.65"),
+            new BigDecimal("50"),
+            new BigDecimal("100"),
+            new BigDecimal("0.15"),
+            new BigDecimal("150000"),
+            new BigDecimal("100000"),
+            new BigDecimal("15000")
+        );
+
+        var response = new SummaryResponse(
+            new BigDecimal("13.78"),
+            new BigDecimal("0.85"),
+            new BigDecimal("0.50"),
+            new BigDecimal("0.92"),
+            new BigDecimal("1.50"),
+            new BigDecimal("0.15"),
+            new BigDecimal("56.05"),
+            new BigDecimal("43.95")
+        );
+
+        when(valuationService.calculateSummary(any(SummaryRequest.class)))
+            .thenReturn(response);
+
+        restTestClient.post().uri("/api/metrics/summary")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody()
+            .jsonPath("$.peTtm").isEqualTo(13.78)
+            .jsonPath("$.grahamNumber").isEqualTo(56.05);
+    }
+
+    @Test
+    void getSummary_whenServiceReturnsPartialResult_shouldReturnStatus200WithNullFields() {
+        var request = new SummaryRequest(
+            new BigDecimal("40.38"),
+            new BigDecimal("2.93"),
+            new BigDecimal("47.65"),
+            null,
+            null,
+            null,
+            new BigDecimal("150000"),
+            new BigDecimal("100000"),
+            new BigDecimal("15000")
+        );
+
+        var response = new SummaryResponse(
+            new BigDecimal("13.78"),
+            new BigDecimal("0.85"),
+            null,
+            null,
+            new BigDecimal("1.50"),
+            new BigDecimal("0.15"),
+            new BigDecimal("56.05"),
+            null
+        );
+
+        when(valuationService.calculateSummary(any(SummaryRequest.class)))
+            .thenReturn(response);
+
+        restTestClient.post().uri("/api/metrics/summary")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(request)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody()
+            .jsonPath("$.psRatio").isEqualTo(null)
+            .jsonPath("$.pegRatio").isEqualTo(null)
+            .jsonPath("$.lynchFairValue").isEqualTo(null)
+            .jsonPath("$.peTtm").isEqualTo(13.78);
     }
 }
