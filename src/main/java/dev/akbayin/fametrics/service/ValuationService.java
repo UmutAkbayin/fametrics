@@ -8,6 +8,8 @@ import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.RoeRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
+import dev.akbayin.fametrics.dto.SummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,31 @@ public class ValuationService {
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
+
+    public SummaryResponse calculateSummary(SummaryRequest request) {
+        var peTtm = calculatePeTtm(new PeTtmRequest(request.sharePrice(), request.eps())).orElse(null);
+        var pbRatio = calculatePbRatio(new PbRatioRequest(request.sharePrice(), request.bvps())).orElse(null);
+        var psRatio = calculatePsRatio(new PsRatioRequest(request.marketCap(), request.totalRevenue())).orElse(null);
+        var pegRatio = calculatePegRatio(new PegRatioRequest(request.sharePrice(), request.eps(), request.epsGrowthRate()))
+            .orElse(null);
+        var deRatio =
+            calculateDeRatio(new DeRatioRequest(request.totalLiabilities(), request.totalEquity())).orElse(null);
+        var roeRatio = calculateRoe(new RoeRequest(request.netIncome(), request.totalEquity())).orElse(null);
+        var grahamNumber = calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps())).orElse(null);
+        var lynchFairValue = calculateLynchFairValue(new LynchFairValueRequest(request.eps(), request.epsGrowthRate()))
+            .orElse(null);
+
+        return new SummaryResponse(
+            peTtm,
+            pbRatio,
+            psRatio,
+            pegRatio,
+            deRatio,
+            roeRatio,
+            grahamNumber,
+            lynchFairValue
+        );
+    }
 
     public Optional<BigDecimal> calculatePeTtm(PeTtmRequest request) {
         var sharePrice = request.sharePrice();
@@ -63,8 +90,13 @@ public class ValuationService {
     }
 
     public Optional<BigDecimal> calculatePegRatio(PegRatioRequest request) {
-        var peRatio = calculatePeTtm(new PeTtmRequest(request.sharePrice(), request.eps()));
         var epsGrowthRate = request.epsGrowthRate();
+
+        if (epsGrowthRate == null || epsGrowthRate.compareTo(BigDecimal.ZERO) == 0) {
+            return Optional.empty();
+        }
+
+        var peRatio = calculatePeTtm(new PeTtmRequest(request.sharePrice(), request.eps()));
 
         return peRatio.map(pe ->
             pe.divide(epsGrowthRate.multiply(new BigDecimal("100")), SCALE, RoundingMode.HALF_UP));
