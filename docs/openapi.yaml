@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: fa-metrics API
+  description: >
+    REST API for computing common stock valuation metrics from raw financial
+    inputs. All calculations use arbitrary-precision decimal arithmetic and
+    return results scaled to 2 decimal places (HALF_UP rounding). No data is
+    persisted — every endpoint is a pure calculation over the request body.
+  version: "0.0.1"
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Valuation
+    description: Individual and aggregate valuation metric calculations
+
+paths:
+  /api/metrics/pe-ttm:
+    post:
+      tags: [Valuation]
+      summary: Price-to-Earnings (TTM) ratio
+      description: sharePrice / eps
+      operationId: calculatePeTtm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PeTtmRequest"
+      responses:
+        "200":
+          description: Calculated PE (TTM) ratio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/pb:
+    post:
+      tags: [Valuation]
+      summary: Price-to-Book ratio
+      description: sharePrice / bvps
+      operationId: calculatePbRatio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PbRatioRequest"
+      responses:
+        "200":
+          description: Calculated P/B ratio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/ps:
+    post:
+      tags: [Valuation]
+      summary: Price-to-Sales ratio
+      description: marketCap / totalRevenue
+      operationId: calculatePsRatio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PsRatioRequest"
+      responses:
+        "200":
+          description: Calculated P/S ratio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/peg:
+    post:
+      tags: [Valuation]
+      summary: Price/Earnings-to-Growth ratio
+      description: >
+        PE (TTM) / (epsGrowthRate * 100). Requires epsGrowthRate to be
+        strictly positive.
+      operationId: calculatePegRatio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PegRatioRequest"
+      responses:
+        "200":
+          description: Calculated PEG ratio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/de:
+    post:
+      tags: [Valuation]
+      summary: Debt-to-Equity ratio
+      description: totalLiabilities / totalEquity
+      operationId: calculateDeRatio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeRatioRequest"
+      responses:
+        "200":
+          description: Calculated D/E ratio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/roe:
+    post:
+      tags: [Valuation]
+      summary: Return on Equity
+      description: netIncome / totalEquity
+      operationId: calculateRoe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoeRequest"
+      responses:
+        "200":
+          description: Calculated ROE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/graham:
+    post:
+      tags: [Valuation]
+      summary: Graham Number
+      description: sqrt(22.5 * eps * bvps)
+      operationId: calculateGrahamNumber
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrahamRequest"
+      responses:
+        "200":
+          description: Calculated Graham Number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/lynch:
+    post:
+      tags: [Valuation]
+      summary: Peter Lynch Fair Value
+      description: eps * (epsGrowthRate * 100)
+      operationId: calculateLynchFairValue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LynchFairValueRequest"
+      responses:
+        "200":
+          description: Calculated Lynch fair value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecimalResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "422":
+          $ref: "#/components/responses/Uncomputable"
+
+  /api/metrics/summary:
+    post:
+      tags: [Valuation]
+      summary: Aggregate summary of all valuation metrics
+      description: >
+        Runs every individual calculation against the shared set of inputs
+        and returns them together. Unlike the single-metric endpoints, this
+        never returns 422 — any metric that cannot be computed from the
+        given inputs (e.g. a missing or non-positive value) is returned as
+        null in the response rather than failing the whole request.
+      operationId: calculateSummary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SummaryRequest"
+      responses:
+        "200":
+          description: Summary of all calculated metrics (fields are null where uncomputable)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SummaryResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+components:
+  schemas:
+    DecimalResult:
+      type: number
+      format: decimal
+      description: Result scaled to 2 decimal places (HALF_UP rounding).
+      example: 12.34
+
+    PeTtmRequest:
+      type: object
+      required: [sharePrice, eps]
+      properties:
+        sharePrice:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        eps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    PbRatioRequest:
+      type: object
+      required: [sharePrice, bvps]
+      properties:
+        sharePrice:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        bvps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    PsRatioRequest:
+      type: object
+      required: [marketCap, totalRevenue]
+      properties:
+        marketCap:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        totalRevenue:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    PegRatioRequest:
+      type: object
+      required: [sharePrice, eps, epsGrowthRate]
+      properties:
+        sharePrice:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        eps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        epsGrowthRate:
+          type: number
+          format: decimal
+          description: >
+            Fractional growth rate (e.g. 0.15 for 15%). Must be strictly
+            positive for the calculation to succeed, but is only
+            @NotNull-validated at the request level.
+
+    DeRatioRequest:
+      type: object
+      required: [totalLiabilities, totalEquity]
+      properties:
+        totalLiabilities:
+          type: number
+          format: decimal
+          minimum: 0
+        totalEquity:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    RoeRequest:
+      type: object
+      required: [netIncome, totalEquity]
+      properties:
+        netIncome:
+          type: number
+          format: decimal
+          description: May be negative (a loss).
+        totalEquity:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    GrahamRequest:
+      type: object
+      required: [eps, bvps]
+      properties:
+        eps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        bvps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+
+    LynchFairValueRequest:
+      type: object
+      required: [eps, epsGrowthRate]
+      properties:
+        eps:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        epsGrowthRate:
+          type: number
+          format: decimal
+          description: Fractional growth rate (e.g. 0.15 for 15%). May be negative.
+
+    SummaryRequest:
+      type: object
+      description: >
+        Superset of inputs for every individual metric. No field is
+        required at the schema level — each metric is simply omitted
+        (returned as null) from the response if its required inputs are
+        missing or invalid.
+      properties:
+        sharePrice:
+          type: number
+          format: decimal
+        eps:
+          type: number
+          format: decimal
+        bvps:
+          type: number
+          format: decimal
+        marketCap:
+          type: number
+          format: decimal
+        totalRevenue:
+          type: number
+          format: decimal
+        epsGrowthRate:
+          type: number
+          format: decimal
+        totalLiabilities:
+          type: number
+          format: decimal
+        totalEquity:
+          type: number
+          format: decimal
+        netIncome:
+          type: number
+          format: decimal
+
+    SummaryResponse:
+      type: object
+      properties:
+        peTtm:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        pbRatio:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        psRatio:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        pegRatio:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        deRatio:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        roeRatio:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        grahamNumber:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+        lynchFairValue:
+          $ref: "#/components/schemas/DecimalResult"
+          nullable: true
+
+    ValidationErrorResponse:
+      type: object
+      description: Map of field name to validation failure message.
+      additionalProperties:
+        type: string
+      example:
+        eps: "must be greater than 0"
+        sharePrice: "must not be null"
+
+  responses:
+    ValidationError:
+      description: >
+        Request body failed bean validation (e.g. a required field is null
+        or fails a @Positive/@PositiveOrZero constraint).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationErrorResponse"
+    Uncomputable:
+      description: >
+        Request was well-formed but the metric could not be calculated
+        (e.g. a value that must be positive was rejected by the service's
+        own business-rule check). No response body.
