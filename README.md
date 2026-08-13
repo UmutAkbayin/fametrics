@@ -6,6 +6,10 @@ ROE, Graham Number, and Peter Lynch Fair Value — from raw financial inputs.
 Built with Spring Boot 4 and Java 25. All calculations use `BigDecimal` with
 explicit rounding, so results are deterministic and free of floating-point error.
 
+> This project is an educational fundamental analysis application. Valuation
+> metrics and benchmarks are intentionally simplified and will be refined over
+> time as the project evolves.
+
 ## Features
 
 - Eight individual valuation metric endpoints, plus a `/summary` endpoint that
