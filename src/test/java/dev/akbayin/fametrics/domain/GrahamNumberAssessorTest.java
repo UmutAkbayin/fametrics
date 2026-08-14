@@ -40,7 +40,7 @@ class GrahamNumberAssessorTest {
 
     @Test
     void evaluate_whenSharePriceIsMissing_shouldReturnNotMeaningful() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
+        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("56.05"));
 
@@ -49,7 +49,7 @@ class GrahamNumberAssessorTest {
 
     @Test
     void evaluate_shouldUseGrahamNumberAsBenchmarkUpperBound() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
+        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("56.05"));
 

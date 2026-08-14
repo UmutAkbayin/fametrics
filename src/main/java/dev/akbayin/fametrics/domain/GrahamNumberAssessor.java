@@ -52,13 +52,15 @@ public class GrahamNumberAssessor implements MetricAssessor<GrahamRequest> {
         return new MetricEvaluation(assessment, benchmark);
     }
 
-    public String interpretation(BigDecimal grahamNumber, BigDecimal sharePrice, String label) {
+    @Override
+    public String interpretation(GrahamRequest request, BigDecimal grahamNumber, Assessment assessment) {
+        var sharePrice = request.sharePrice();
         if (sharePrice == null) {
             return "Estimated intrinsic value is " + grahamNumber
                 + ". Supply a share price to compare it against.";
         }
 
-        return "At a share price of " + sharePrice + ", the stock looks " + label.toLowerCase()
+        return "At a share price of " + sharePrice + ", the stock looks " + assessment.label().toLowerCase()
             + " against an estimated intrinsic value of " + grahamNumber + ".";
     }
 }
