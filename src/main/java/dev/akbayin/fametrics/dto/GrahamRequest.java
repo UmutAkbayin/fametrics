@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 public record GrahamRequest(
     @NotNull @Positive BigDecimal eps,
-    @NotNull @Positive BigDecimal bvps
+    @NotNull @Positive BigDecimal bvps,
+    @Positive BigDecimal sharePrice
 ) {
 }
