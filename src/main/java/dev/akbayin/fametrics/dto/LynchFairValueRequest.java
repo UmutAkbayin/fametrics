@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 
 public record LynchFairValueRequest(
     @NotNull @Positive BigDecimal eps,
-    @NotNull BigDecimal epsGrowthRate
+    @NotNull BigDecimal epsGrowthRate,
+    @Positive BigDecimal sharePrice
     ) {
 }
