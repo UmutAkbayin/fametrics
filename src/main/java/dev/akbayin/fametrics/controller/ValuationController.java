@@ -3,6 +3,7 @@ package dev.akbayin.fametrics.controller;
 import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
+import dev.akbayin.fametrics.dto.MetricResponse;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -73,6 +74,13 @@ public class ValuationController {
     @PostMapping("/graham")
     public ResponseEntity<BigDecimal> getGrahamNumber(@Valid @RequestBody GrahamRequest request) {
         return valuationService.calculateGrahamNumber(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
+    @PostMapping("/graham/assessment")
+    public ResponseEntity<MetricResponse> getGrahamNumberAssessment(@Valid @RequestBody GrahamRequest request) {
+        return valuationService.assessGrahamNumber(request)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.unprocessableContent().build());
     }

@@ -39,7 +39,7 @@ class ValuationControllerTest {
 
     @Test
     void getGrahamNumber_withValidRequest_shouldReturnStatus200() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
+        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
 
         when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
             .thenReturn(Optional.of(new BigDecimal("56.05")));
@@ -54,7 +54,7 @@ class ValuationControllerTest {
 
     @Test
     void getGrahamNumber_withNonPositiveEps_shouldReturnStatus400() {
-        var request = new GrahamRequest(BigDecimal.ZERO, new BigDecimal("47.65"));
+        var request = new GrahamRequest(BigDecimal.ZERO, new BigDecimal("47.65"), null);
 
         restTestClient.post().uri("/api/metrics/graham")
             .contentType(MediaType.APPLICATION_JSON)
@@ -70,7 +70,7 @@ class ValuationControllerTest {
 
     @Test
     void getGrahamNumber_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"));
+        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
 
         when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
             .thenReturn(Optional.empty());
