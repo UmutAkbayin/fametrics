@@ -32,7 +32,7 @@ class ValuationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInvalidBigDecimalPairs")
     void calculateGrahamNumber_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal bvps) {
-        var result = valuationService.calculateGrahamNumber(new GrahamRequest(eps, bvps));
+        var result = valuationService.calculateGrahamNumber(new GrahamRequest(eps, bvps, null));
 
         assertThat(result).isEmpty();
     }
@@ -41,7 +41,8 @@ class ValuationServiceTest {
     void calculateGrahamNumber_whenInputIsValid_shouldReturnValue() {
         var result = valuationService.calculateGrahamNumber(new GrahamRequest(
             new BigDecimal("0.89"),
-            new BigDecimal("3.53")
+            new BigDecimal("3.53"),
+            null
         ));
 
         assertThat(result).contains(new BigDecimal("8.41"));

@@ -1,8 +1,10 @@
 package dev.akbayin.fametrics.service;
 
+import dev.akbayin.fametrics.domain.GrahamNumberAssessor;
 import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
+import dev.akbayin.fametrics.dto.MetricResponse;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -22,6 +24,8 @@ import java.util.Optional;
 @Service
 public class ValuationService {
 
+    private final GrahamNumberAssessor grahamNumberAssessor;
+
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
 
@@ -34,7 +38,8 @@ public class ValuationService {
         var deRatio =
             calculateDeRatio(new DeRatioRequest(request.totalLiabilities(), request.totalEquity())).orElse(null);
         var roeRatio = calculateRoe(new RoeRequest(request.netIncome(), request.totalEquity())).orElse(null);
-        var grahamNumber = calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps())).orElse(null);
+        var grahamNumber =
+            calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps(), request.sharePrice())).orElse(null);
         var lynchFairValue = calculateLynchFairValue(new LynchFairValueRequest(request.eps(), request.epsGrowthRate()))
             .orElse(null);
 
@@ -146,6 +151,22 @@ public class ValuationService {
             .setScale(SCALE, RoundingMode.HALF_UP);
 
         return Optional.of(result);
+    }
+
+    public Optional<MetricResponse> assessGrahamNumber(GrahamRequest request) {
+        return calculateGrahamNumber(request)
+            .map(value -> {
+                var evaluation = grahamNumberAssessor.evaluate(request, value);
+
+                return new MetricResponse(
+                    grahamNumberAssessor.metric(),
+                    value,
+                    evaluation.assessment(),
+                    evaluation.benchmark(),
+                    grahamNumberAssessor.description(),
+                    grahamNumberAssessor.interpretation(value, request.sharePrice(), evaluation.assessment().label())
+                );
+            });
     }
 
     public Optional<BigDecimal> calculateLynchFairValue(LynchFairValueRequest request) {
