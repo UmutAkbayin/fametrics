@@ -13,4 +13,6 @@ public interface MetricAssessor<R> {
     String description();
 
     MetricEvaluation evaluate(R request, BigDecimal value);
+
+    String interpretation(R request, BigDecimal value, Assessment assessment);
 }
