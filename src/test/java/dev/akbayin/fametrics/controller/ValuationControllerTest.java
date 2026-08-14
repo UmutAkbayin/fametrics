@@ -361,7 +361,7 @@ class ValuationControllerTest {
 
     @Test
     void getLynchFairValue_withValidRequest_shouldReturnStatus200() {
-        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"));
+        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"), null);
 
         when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
             .thenReturn(Optional.of(new BigDecimal("43.95")));
@@ -376,7 +376,7 @@ class ValuationControllerTest {
 
     @Test
     void getLynchFairValue_withNonPositiveEps_shouldReturnStatus400() {
-        var request = new LynchFairValueRequest(BigDecimal.ZERO, new BigDecimal("0.15"));
+        var request = new LynchFairValueRequest(BigDecimal.ZERO, new BigDecimal("0.15"), null);
 
         restTestClient.post().uri("/api/metrics/lynch")
             .contentType(MediaType.APPLICATION_JSON)
@@ -392,7 +392,7 @@ class ValuationControllerTest {
 
     @Test
     void getLynchFairValue_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"));
+        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"), null);
 
         when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
             .thenReturn(Optional.empty());

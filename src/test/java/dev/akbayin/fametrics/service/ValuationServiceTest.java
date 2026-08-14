@@ -170,7 +170,7 @@ class ValuationServiceTest {
     @ParameterizedTest
     @MethodSource("provideInvalidLynchFairValueInputs")
     void calculateLynchFairValue_whenInputIsInvalid_shouldReturnEmpty(BigDecimal eps, BigDecimal epsGrowthRate) {
-        var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(eps, epsGrowthRate));
+        var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(eps, epsGrowthRate, null));
 
         assertThat(result).isEmpty();
     }
@@ -179,7 +179,8 @@ class ValuationServiceTest {
     void calculateLynchFairValue_whenInputIsValid_shouldReturnValue() {
         var result = valuationService.calculateLynchFairValue(new LynchFairValueRequest(
             new BigDecimal("2.93"),
-            new BigDecimal("0.15")
+            new BigDecimal("0.15"),
+            null
         ));
 
         assertThat(result).contains(new BigDecimal("43.95"));

@@ -92,6 +92,13 @@ public class ValuationController {
             .orElse(ResponseEntity.unprocessableContent().build());
     }
 
+    @PostMapping("/lynch/assessment")
+    public ResponseEntity<MetricResponse> getLynchFairValueAssessment(@Valid @RequestBody LynchFairValueRequest request) {
+        return valuationService.assessLynchFairValue(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
     @PostMapping("/summary")
     public ResponseEntity<SummaryResponse> getSummary(@Valid @RequestBody SummaryRequest request) {
         return ResponseEntity.ok(valuationService.calculateSummary(request));

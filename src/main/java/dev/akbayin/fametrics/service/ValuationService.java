@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.domain.GrahamNumberAssessor;
+import dev.akbayin.fametrics.domain.LynchFairValueAssessor;
 import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
@@ -25,6 +26,7 @@ import java.util.Optional;
 public class ValuationService {
 
     private final GrahamNumberAssessor grahamNumberAssessor;
+    private final LynchFairValueAssessor lynchFairValueAssessor;
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
@@ -40,7 +42,8 @@ public class ValuationService {
         var roeRatio = calculateRoe(new RoeRequest(request.netIncome(), request.totalEquity())).orElse(null);
         var grahamNumber =
             calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps(), request.sharePrice())).orElse(null);
-        var lynchFairValue = calculateLynchFairValue(new LynchFairValueRequest(request.eps(), request.epsGrowthRate()))
+        var lynchFairValue = calculateLynchFairValue(
+            new LynchFairValueRequest(request.eps(), request.epsGrowthRate(), request.sharePrice()))
             .orElse(null);
 
         return new SummaryResponse(
@@ -134,6 +137,22 @@ public class ValuationService {
         return Optional.of(result);
     }
 
+    public Optional<MetricResponse> assessGrahamNumber(GrahamRequest request) {
+        return calculateGrahamNumber(request)
+            .map(value -> {
+                var evaluation = grahamNumberAssessor.evaluate(request, value);
+
+                return new MetricResponse(
+                    grahamNumberAssessor.metric(),
+                    value,
+                    evaluation.assessment(),
+                    evaluation.benchmark(),
+                    grahamNumberAssessor.description(),
+                    grahamNumberAssessor.interpretation(request, value, evaluation.assessment())
+                );
+            });
+    }
+
     public Optional<BigDecimal> calculateGrahamNumber(GrahamRequest request) {
         var eps = request.eps();
         var bvps = request.bvps();
@@ -153,18 +172,18 @@ public class ValuationService {
         return Optional.of(result);
     }
 
-    public Optional<MetricResponse> assessGrahamNumber(GrahamRequest request) {
-        return calculateGrahamNumber(request)
+    public Optional<MetricResponse> assessLynchFairValue(LynchFairValueRequest request) {
+        return calculateLynchFairValue(request)
             .map(value -> {
-                var evaluation = grahamNumberAssessor.evaluate(request, value);
+                var evaluation = lynchFairValueAssessor.evaluate(request, value);
 
                 return new MetricResponse(
-                    grahamNumberAssessor.metric(),
+                    lynchFairValueAssessor.metric(),
                     value,
                     evaluation.assessment(),
                     evaluation.benchmark(),
-                    grahamNumberAssessor.description(),
-                    grahamNumberAssessor.interpretation(value, request.sharePrice(), evaluation.assessment().label())
+                    lynchFairValueAssessor.description(),
+                    lynchFairValueAssessor.interpretation(request, value, evaluation.assessment())
                 );
             });
     }
