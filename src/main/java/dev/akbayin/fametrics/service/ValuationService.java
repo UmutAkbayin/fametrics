@@ -6,6 +6,7 @@ import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.MetricResponse;
+import dev.akbayin.fametrics.domain.PeTtmAssessor;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.PegRatioRequest;
@@ -27,6 +28,7 @@ public class ValuationService {
 
     private final GrahamNumberAssessor grahamNumberAssessor;
     private final LynchFairValueAssessor lynchFairValueAssessor;
+    private final PeTtmAssessor peTtmAssessor;
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
@@ -56,6 +58,22 @@ public class ValuationService {
             grahamNumber,
             lynchFairValue
         );
+    }
+
+    public Optional<MetricResponse> assessPeTtm(PeTtmRequest request) {
+        return calculatePeTtm(request)
+            .map(value -> {
+                var evaluation = peTtmAssessor.evaluate(request, value);
+
+                return new MetricResponse(
+                    peTtmAssessor.metric(),
+                    value,
+                    evaluation.assessment(),
+                    evaluation.benchmark(),
+                    peTtmAssessor.description(),
+                    peTtmAssessor.interpretation(request, value, evaluation.assessment())
+                );
+            });
     }
 
     public Optional<BigDecimal> calculatePeTtm(PeTtmRequest request) {
