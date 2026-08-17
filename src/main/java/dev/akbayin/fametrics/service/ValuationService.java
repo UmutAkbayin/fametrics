@@ -2,6 +2,7 @@ package dev.akbayin.fametrics.service;
 
 import dev.akbayin.fametrics.domain.GrahamNumberAssessor;
 import dev.akbayin.fametrics.domain.LynchFairValueAssessor;
+import dev.akbayin.fametrics.domain.PbRatioAssessor;
 import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
@@ -29,6 +30,7 @@ public class ValuationService {
     private final GrahamNumberAssessor grahamNumberAssessor;
     private final LynchFairValueAssessor lynchFairValueAssessor;
     private final PeTtmAssessor peTtmAssessor;
+    private final PbRatioAssessor pbRatioAssessor;
 
     private static final BigDecimal MULTIPLIER = new BigDecimal("22.5");
     private static final int SCALE = 2;
@@ -36,14 +38,15 @@ public class ValuationService {
     public SummaryResponse calculateSummary(SummaryRequest request) {
         var peTtm = calculatePeTtm(new PeTtmRequest(request.sharePrice(), request.eps())).orElse(null);
         var pbRatio = calculatePbRatio(new PbRatioRequest(request.sharePrice(), request.bvps())).orElse(null);
-        var psRatio = calculatePsRatio(new PsRatioRequest(request.marketCap(), request.totalRevenue())).orElse(null);
+        var psRatio = calculatePsRatio(new PsRatioRequest(request.marketCap(), request.totalRevenue()))
+            .orElse(null);
         var pegRatio = calculatePegRatio(new PegRatioRequest(request.sharePrice(), request.eps(), request.epsGrowthRate()))
             .orElse(null);
-        var deRatio =
-            calculateDeRatio(new DeRatioRequest(request.totalLiabilities(), request.totalEquity())).orElse(null);
+        var deRatio = calculateDeRatio(new DeRatioRequest(request.totalLiabilities(), request.totalEquity()))
+            .orElse(null);
         var roeRatio = calculateRoe(new RoeRequest(request.netIncome(), request.totalEquity())).orElse(null);
-        var grahamNumber =
-            calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps(), request.sharePrice())).orElse(null);
+        var grahamNumber = calculateGrahamNumber(new GrahamRequest(request.eps(), request.bvps(), request.sharePrice()))
+            .orElse(null);
         var lynchFairValue = calculateLynchFairValue(
             new LynchFairValueRequest(request.eps(), request.epsGrowthRate(), request.sharePrice()))
             .orElse(null);
@@ -87,6 +90,22 @@ public class ValuationService {
         BigDecimal result = sharePrice.divide(eps, SCALE, RoundingMode.HALF_UP);
 
         return Optional.of(result);
+    }
+
+    public Optional<MetricResponse> assessPbRatio(PbRatioRequest request) {
+        return calculatePbRatio(request)
+            .map(value -> {
+                var evaluation = pbRatioAssessor.evaluate(request, value);
+
+                return new MetricResponse(
+                    pbRatioAssessor.metric(),
+                    value,
+                    evaluation.assessment(),
+                    evaluation.benchmark(),
+                    pbRatioAssessor.description(),
+                    pbRatioAssessor.interpretation(request, value, evaluation.assessment())
+                );
+            });
     }
 
     public Optional<BigDecimal> calculatePbRatio(PbRatioRequest request) {
