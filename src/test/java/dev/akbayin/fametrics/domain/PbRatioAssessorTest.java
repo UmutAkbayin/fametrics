@@ -1,6 +1,8 @@
 package dev.akbayin.fametrics.domain;
 
+import dev.akbayin.fametrics.dto.MarketData;
 import dev.akbayin.fametrics.dto.PbRatioRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -13,7 +15,8 @@ class PbRatioAssessorTest {
 
     @Test
     void evaluate_whenPbRatioIsBelowOne_shouldReturnFavorable() {
-        var request = new PbRatioRequest(new BigDecimal("40.00"), new BigDecimal("50.00"));
+        var marketData = new MarketData(new BigDecimal("40.00"), null, new BigDecimal("50.00"));
+        var request = new SummaryRequest(marketData, null, null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("0.80"));
 
@@ -22,7 +25,8 @@ class PbRatioAssessorTest {
 
     @Test
     void evaluate_whenPbRatioIsBetweenOneAndThree_shouldReturnNeutral() {
-        var request = new PbRatioRequest(new BigDecimal("100.00"), new BigDecimal("50.00"));
+        var marketData = new MarketData(new BigDecimal("100.00"), null, new BigDecimal("50.00"));
+        var request = new SummaryRequest(marketData, null, null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("2.00"));
 
@@ -31,7 +35,8 @@ class PbRatioAssessorTest {
 
     @Test
     void evaluate_whenPbRatioIsAboveThree_shouldReturnUnfavorable() {
-        var request = new PbRatioRequest(new BigDecimal("200.00"), new BigDecimal("50.00"));
+        var marketData = new MarketData(new BigDecimal("200.00"), null, new BigDecimal("50.00"));
+        var request = new SummaryRequest(marketData, null, null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("4.00"));
 
@@ -40,7 +45,8 @@ class PbRatioAssessorTest {
 
     @Test
     void evaluate_shouldUseUndervaluedAndOvervaluedThresholdsAsBenchmarkBounds() {
-        var request = new PbRatioRequest(new BigDecimal("100.00"), new BigDecimal("50.00"));
+        var marketData = new MarketData(new BigDecimal("100.00"), null, new BigDecimal("50.00"));
+        var request = new SummaryRequest(marketData, null, null);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("2.00"));
 
