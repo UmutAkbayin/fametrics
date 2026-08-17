@@ -1,12 +1,15 @@
 package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.PeTtmRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Optional;
 
 @Component
-public class PeTtmAssessor implements MetricAssessor<PeTtmRequest> {
+public class PeTtmAssessor implements MetricAssessor {
 
     // Rough rule-of-thumb range, not sector- or rate-adjusted; arbitrary placeholder, not a researched value.
     private static final BigDecimal UNDERVALUED_THRESHOLD = new BigDecimal("15");
@@ -24,7 +27,7 @@ public class PeTtmAssessor implements MetricAssessor<PeTtmRequest> {
     }
 
     @Override
-    public MetricEvaluation evaluate(PeTtmRequest request, BigDecimal peTtm) {
+    public MetricEvaluation evaluate(SummaryRequest request, BigDecimal peTtm) {
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -45,8 +48,34 @@ public class PeTtmAssessor implements MetricAssessor<PeTtmRequest> {
     }
 
     @Override
-    public String interpretation(PeTtmRequest request, BigDecimal peTtm, Assessment assessment) {
+    public String interpretation(SummaryRequest request, BigDecimal peTtm, Assessment assessment) {
         return "At " + peTtm + " trailing earnings, the stock's P/E is considered "
             + assessment.label().toLowerCase() + ".";
+    }
+
+    @Override
+    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        PeTtmRequest request = extractRequest(summaryRequest);
+
+        var sharePrice = request.sharePrice();
+        var eps = request.eps();
+
+        if (anyNonPositive(sharePrice, eps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = sharePrice.divide(eps, 2, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    private PeTtmRequest extractRequest(SummaryRequest request) {
+        if (request == null || request.marketData() == null) {
+            return null;
+        }
+        return new PeTtmRequest(
+            request.marketData().sharePrice(),
+            request.marketData().eps()
+        );
     }
 }
