@@ -71,6 +71,7 @@ public class PbRatioAssessor implements MetricAssessor {
         if (request == null || request.marketData() == null) {
             return null;
         }
+
         return new PbRatioRequest(
             request.marketData().sharePrice(),
             request.marketData().bvps()
