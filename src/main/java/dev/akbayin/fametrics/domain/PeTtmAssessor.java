@@ -73,6 +73,7 @@ public class PeTtmAssessor implements MetricAssessor {
         if (request == null || request.marketData() == null) {
             return null;
         }
+
         return new PeTtmRequest(
             request.marketData().sharePrice(),
             request.marketData().eps()
