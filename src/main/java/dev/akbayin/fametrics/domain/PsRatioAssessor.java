@@ -2,11 +2,13 @@ package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.PsRatioRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
+@Component
 public class PsRatioAssessor implements MetricAssessor {
 
     // Rough rule-of-thumb range, not sector- or rate-adjusted; arbitrary placeholder, not a researched value.
