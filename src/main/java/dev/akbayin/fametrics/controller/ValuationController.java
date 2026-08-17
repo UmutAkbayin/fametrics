@@ -50,6 +50,13 @@ public class ValuationController {
             .orElse(ResponseEntity.unprocessableContent().build());
     }
 
+    @PostMapping("/pb/assessment")
+    public ResponseEntity<MetricResponse> getPbRatioAssessment(@Valid @RequestBody PbRatioRequest request) {
+        return valuationService.assessPbRatio(request)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.unprocessableContent().build());
+    }
+
     @PostMapping("/ps")
     public ResponseEntity<BigDecimal> getPsRatio(@Valid @RequestBody PsRatioRequest request) {
         return valuationService.calculatePsRatio(request)
