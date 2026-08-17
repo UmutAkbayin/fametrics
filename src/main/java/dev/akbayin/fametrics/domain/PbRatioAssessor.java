@@ -1,12 +1,15 @@
 package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.PbRatioRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Optional;
 
 @Component
-public class PbRatioAssessor implements MetricAssessor<PbRatioRequest> {
+public class PbRatioAssessor implements MetricAssessor {
 
     // Rough rule-of-thumb range, not sector- or rate-adjusted; arbitrary placeholder, not a researched value.
     private static final BigDecimal UNDERVALUED_THRESHOLD = new BigDecimal("1");
@@ -24,7 +27,7 @@ public class PbRatioAssessor implements MetricAssessor<PbRatioRequest> {
     }
 
     @Override
-    public MetricEvaluation evaluate(PbRatioRequest request, BigDecimal pbRatio) {
+    public MetricEvaluation evaluate(SummaryRequest request, BigDecimal pbRatio) {
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -45,7 +48,32 @@ public class PbRatioAssessor implements MetricAssessor<PbRatioRequest> {
     }
 
     @Override
-    public String interpretation(PbRatioRequest request, BigDecimal pbRatio, Assessment assessment) {
+    public String interpretation(SummaryRequest request, BigDecimal pbRatio, Assessment assessment) {
         return "At " + pbRatio + " the stock's P/B is considered " + assessment.label().toLowerCase() + ".";
+    }
+
+    @Override
+    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        PbRatioRequest request = extractRequest(summaryRequest);
+        var sharePrice = request.sharePrice();
+        var bvps = request.bvps();
+
+        if (anyNonPositive(sharePrice, bvps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = sharePrice.divide(bvps, 2, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    private PbRatioRequest extractRequest(SummaryRequest request) {
+        if (request == null || request.marketData() == null) {
+            return null;
+        }
+        return new PbRatioRequest(
+            request.marketData().sharePrice(),
+            request.marketData().bvps()
+        );
     }
 }
