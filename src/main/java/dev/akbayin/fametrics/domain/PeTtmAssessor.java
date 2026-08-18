@@ -89,7 +89,7 @@ public class PeTtmAssessor implements MetricAssessor {
     }
 
     private PeTtmRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.marketData() == null) {
+        if (request.marketData() == null) {
             return null;
         }
 
