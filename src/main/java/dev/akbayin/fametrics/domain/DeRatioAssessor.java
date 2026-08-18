@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -28,6 +29,9 @@ public class DeRatioAssessor implements MetricAssessor {
 
     @Override
     public MetricEvaluation evaluate(SummaryRequest request, BigDecimal deRatio) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(deRatio, "DeRatio must not be null");
+
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -48,12 +52,17 @@ public class DeRatioAssessor implements MetricAssessor {
     }
 
     @Override
-    public String interpretation(SummaryRequest request, BigDecimal dbRatio, Assessment assessment) {
-        return "At " + dbRatio + " the stock's D/E is considered " + assessment.label().toLowerCase() + ".";
+    public String interpretation(SummaryRequest request, BigDecimal deRatio, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(deRatio, "DeRatio must not be null");
+
+        return "At " + deRatio + " the stock's D/E is considered " + assessment.label().toLowerCase() + ".";
     }
 
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
         var request = extractRequest(summaryRequest);
 
         var totalLiabilities = request.totalLiabilities();
@@ -70,7 +79,7 @@ public class DeRatioAssessor implements MetricAssessor {
     }
 
     private DeRatioRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.capitalStructure() == null) {
+        if (request.capitalStructure() == null) {
             return null;
         }
 
