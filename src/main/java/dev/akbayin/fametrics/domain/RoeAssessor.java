@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.RoeRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +62,7 @@ public class RoeAssessor implements MetricAssessor {
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
 
-        var request = extractRequest(summaryRequest);
+        var request = summaryRequest.capitalStructure();
         if (request == null) {
             return Optional.empty();
         }
@@ -78,16 +77,5 @@ public class RoeAssessor implements MetricAssessor {
         BigDecimal result = netIncome.divide(totalEquity, 2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private RoeRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.capitalStructure() == null) {
-            return null;
-        }
-
-        return new RoeRequest(
-            request.capitalStructure().netIncome(),
-            request.capitalStructure().totalEquity()
-        );
     }
 }
