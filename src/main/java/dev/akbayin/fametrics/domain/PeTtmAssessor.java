@@ -56,6 +56,9 @@ public class PeTtmAssessor implements MetricAssessor {
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         PeTtmRequest request = extractRequest(summaryRequest);
+        if (request == null) {
+            return Optional.empty();
+        }
 
         var sharePrice = request.sharePrice();
         var eps = request.eps();
