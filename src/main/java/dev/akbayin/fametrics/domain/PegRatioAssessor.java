@@ -55,6 +55,9 @@ public class PegRatioAssessor implements MetricAssessor {
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         PegRatioRequest request = extractRequest(summaryRequest);
+        if (request == null) {
+            return Optional.empty();
+        }
 
         var epsGrowthRate = request.epsGrowthRate();
 
