@@ -55,6 +55,9 @@ public class PsRatioAssessor implements MetricAssessor {
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         var request = extractRequest(summaryRequest);
+        if (request == null) {
+            return Optional.empty();
+        }
 
         var marketCap = request.marketCap();
         var totalRevenue = request.totalRevenue();
