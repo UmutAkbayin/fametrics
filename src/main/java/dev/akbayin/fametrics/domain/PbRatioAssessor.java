@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +62,7 @@ public class PbRatioAssessor implements MetricAssessor {
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
 
-        PbRatioRequest request = extractRequest(summaryRequest);
+        var request = summaryRequest.marketData();
         if (request == null) {
             return Optional.empty();
         }
@@ -78,16 +77,5 @@ public class PbRatioAssessor implements MetricAssessor {
         BigDecimal result = sharePrice.divide(bvps, 2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private PbRatioRequest extractRequest(SummaryRequest request) {
-        if (request.marketData() == null) {
-            return null;
-        }
-
-        return new PbRatioRequest(
-            request.marketData().sharePrice(),
-            request.marketData().bvps()
-        );
     }
 }

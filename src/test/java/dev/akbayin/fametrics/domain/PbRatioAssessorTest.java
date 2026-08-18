@@ -1,7 +1,6 @@
 package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.MarketData;
-import dev.akbayin.fametrics.dto.PbRatioRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.junit.jupiter.api.Test;
 
