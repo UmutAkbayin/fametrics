@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.PeTtmRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -71,8 +70,9 @@ public class PeTtmAssessor implements MetricAssessor {
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
 
-        var request = extractRequest(summaryRequest);
-        if (request == null) {
+        var request = summaryRequest.marketData();
+
+        if (request == null ) {
             return Optional.empty();
         }
 
@@ -86,16 +86,5 @@ public class PeTtmAssessor implements MetricAssessor {
         BigDecimal result = sharePrice.divide(eps, 2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private PeTtmRequest extractRequest(SummaryRequest request) {
-        if (request.marketData() == null) {
-            return null;
-        }
-
-        return new PeTtmRequest(
-            request.marketData().sharePrice(),
-            request.marketData().eps()
-        );
     }
 }
