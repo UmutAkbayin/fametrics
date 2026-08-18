@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -28,6 +29,9 @@ public class PsRatioAssessor implements MetricAssessor {
 
     @Override
     public MetricEvaluation evaluate(SummaryRequest request, BigDecimal psRatio) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(psRatio, "PsRatio must not be null");
+
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -49,11 +53,16 @@ public class PsRatioAssessor implements MetricAssessor {
 
     @Override
     public String interpretation(SummaryRequest request, BigDecimal psRatio, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(psRatio, "PsRatio must not be null");
+
         return "At " + psRatio + " the stock's P/S is considered " + assessment.label().toLowerCase() + ".";
     }
 
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
         var request = extractRequest(summaryRequest);
         if (request == null) {
             return Optional.empty();
@@ -72,7 +81,7 @@ public class PsRatioAssessor implements MetricAssessor {
     }
 
     private PsRatioRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.marketData() == null) {
+        if (request.marketData() == null) {
             return null;
         }
 
