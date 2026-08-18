@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.DeRatioRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +62,7 @@ public class DeRatioAssessor implements MetricAssessor {
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
 
-        var request = extractRequest(summaryRequest);
+        var request = summaryRequest.capitalStructure();
 
         var totalLiabilities = request.totalLiabilities();
         var totalEquity = request.totalEquity();
@@ -76,16 +75,5 @@ public class DeRatioAssessor implements MetricAssessor {
         BigDecimal result = totalLiabilities.divide(totalEquity, 2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private DeRatioRequest extractRequest(SummaryRequest request) {
-        if (request.capitalStructure() == null) {
-            return null;
-        }
-
-        return new DeRatioRequest(
-            request.capitalStructure().totalLiabilities(),
-            request.capitalStructure().totalEquity()
-        );
     }
 }
