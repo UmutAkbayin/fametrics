@@ -1,13 +1,17 @@
 package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.GrahamRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
-public class GrahamNumberAssessor implements MetricAssessor<GrahamRequest> {
+public class GrahamNumberAssessor implements MetricAssessor {
 
     private static final BigDecimal UNDERVALUED_THRESHOLD = new BigDecimal("0.90");
     private static final BigDecimal OVERVALUED_THRESHOLD = new BigDecimal("1.10");
@@ -24,12 +28,23 @@ public class GrahamNumberAssessor implements MetricAssessor<GrahamRequest> {
     }
 
     @Override
-    public MetricEvaluation evaluate(GrahamRequest request, BigDecimal grahamNumber) {
+    public MetricEvaluation evaluate(SummaryRequest summaryRequest, BigDecimal grahamNumber) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+        Objects.requireNonNull(grahamNumber, "Graham Number must not be null");
+
+        var request = extractRequest(summaryRequest);
         var benchmark = new Benchmark(
             null,
             grahamNumber,
             "A share price at or below the Graham Number suggests the stock may be undervalued."
         );
+
+        if (request == null) {
+            return new MetricEvaluation(
+                new Assessment(Rating.NOT_MEANINGFUL, "No market data provided for comparison"),
+                benchmark
+            );
+        }
 
         var sharePrice = request.sharePrice();
         if (sharePrice == null) {
@@ -39,7 +54,7 @@ public class GrahamNumberAssessor implements MetricAssessor<GrahamRequest> {
             );
         }
 
-        var ratio = sharePrice.divide(grahamNumber, 4, RoundingMode.HALF_UP);
+        var ratio = sharePrice.divide(grahamNumber, 2, RoundingMode.HALF_UP);
         Assessment assessment;
         if (ratio.compareTo(UNDERVALUED_THRESHOLD) <= 0) {
             assessment = new Assessment(Rating.FAVORABLE, "Undervalued");
@@ -53,14 +68,58 @@ public class GrahamNumberAssessor implements MetricAssessor<GrahamRequest> {
     }
 
     @Override
-    public String interpretation(GrahamRequest request, BigDecimal grahamNumber, Assessment assessment) {
-        var sharePrice = request.sharePrice();
-        if (sharePrice == null) {
+    public String interpretation(SummaryRequest summaryRequest, BigDecimal grahamNumber, Assessment assessment) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+        Objects.requireNonNull(grahamNumber, "Graham Number must not be null");
+
+        var request = extractRequest(summaryRequest);
+
+        if (request == null || request.sharePrice() == null) {
             return "Estimated intrinsic value is " + grahamNumber
-                + ". Supply a share price to compare it against.";
+                + ". Supply valid market data to compare it against.";
         }
 
-        return "At a share price of " + sharePrice + ", the stock looks " + assessment.label().toLowerCase()
+        return "At a share price of " + request.sharePrice() + ", the stock looks " + assessment.label().toLowerCase()
             + " against an estimated intrinsic value of " + grahamNumber + ".";
+    }
+
+    @Override
+    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
+        var request = extractRequest(summaryRequest);
+
+        if (request == null) {
+            return Optional.empty();
+        }
+
+        var eps = request.eps();
+        var bvps = request.bvps();
+
+        if (anyNonPositive(eps, bvps)) {
+            return Optional.empty();
+        }
+
+        BigDecimal product = new BigDecimal("22.5")
+            .multiply(eps)
+            .multiply(bvps);
+
+        BigDecimal result = product
+            .sqrt(MathContext.DECIMAL64)
+            .setScale(2, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    private GrahamRequest extractRequest(SummaryRequest request) {
+        if (request.marketData() == null) {
+            return null;
+        }
+
+        return new GrahamRequest(
+            request.marketData().eps(),
+            request.marketData().bvps(),
+            request.marketData().sharePrice()
+        );
     }
 }
