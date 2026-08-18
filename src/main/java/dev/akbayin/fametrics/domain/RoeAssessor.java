@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -28,6 +29,9 @@ public class RoeAssessor implements MetricAssessor {
 
     @Override
     public MetricEvaluation evaluate(SummaryRequest request, BigDecimal roe) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(roe, "ROE must not be null");
+
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -49,11 +53,16 @@ public class RoeAssessor implements MetricAssessor {
 
     @Override
     public String interpretation(SummaryRequest request, BigDecimal roe, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(roe, "ROE must not be null");
+
         return "At " + roe + " the stock's ROE is considered " + assessment.label().toLowerCase() + ".";
     }
 
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
         var request = extractRequest(summaryRequest);
         if (request == null) {
             return Optional.empty();
