@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -28,12 +29,22 @@ public class PeTtmAssessor implements MetricAssessor {
 
     @Override
     public MetricEvaluation evaluate(SummaryRequest request, BigDecimal peTtm) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(peTtm, "PeTtm must not be null");
+
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
             "A P/E roughly between 15 and 25 is treated here as a broadly \"fair\" range. This ignores "
                 + "sector, growth rate, and interest-rate context, so treat it as a rough signal, not a verdict."
         );
+
+        if (request == null) {
+            return new MetricEvaluation(
+                new Assessment(Rating.NOT_MEANINGFUL, "No market data provided for comparison"),
+                benchmark
+            );
+        }
 
         Assessment assessment;
         if (peTtm.compareTo(UNDERVALUED_THRESHOLD) < 0) {
@@ -49,13 +60,18 @@ public class PeTtmAssessor implements MetricAssessor {
 
     @Override
     public String interpretation(SummaryRequest request, BigDecimal peTtm, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(peTtm, "PeTtm must not be null");
+
         return "At " + peTtm + " trailing earnings, the stock's P/E is considered "
             + assessment.label().toLowerCase() + ".";
     }
 
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
-        PeTtmRequest request = extractRequest(summaryRequest);
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
+        var request = extractRequest(summaryRequest);
         if (request == null) {
             return Optional.empty();
         }
