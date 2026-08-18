@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.LynchFairValueRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -28,11 +27,10 @@ public class LynchFairValueAssessor implements MetricAssessor {
     }
 
     @Override
-    public MetricEvaluation evaluate(SummaryRequest summaryRequest, BigDecimal lynchFairValue) {
-        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+    public MetricEvaluation evaluate(SummaryRequest request, BigDecimal lynchFairValue) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
         Objects.requireNonNull(lynchFairValue, "Lynch Fair Value must not be null");
 
-        var request = extractRequest(summaryRequest);
         var benchmark = new Benchmark(
             null,
             lynchFairValue,
@@ -40,14 +38,14 @@ public class LynchFairValueAssessor implements MetricAssessor {
                 + "relative to its earnings growth rate."
         );
 
-        if (request == null) {
+        if (request.marketData() == null || request.fundamentalData() == null) {
             return new MetricEvaluation(
                 new Assessment(Rating.NOT_MEANINGFUL, "No market data or fundamental data provided for comparison"),
                 benchmark
             );
         }
 
-        var sharePrice = request.sharePrice();
+        var sharePrice = request.marketData().sharePrice();
         if (sharePrice == null) {
             return new MetricEvaluation(
                 new Assessment(Rating.NOT_MEANINGFUL, "No share price provided for comparison"),
@@ -69,32 +67,29 @@ public class LynchFairValueAssessor implements MetricAssessor {
     }
 
     @Override
-    public String interpretation(SummaryRequest summaryRequest, BigDecimal lynchFairValue, Assessment assessment) {
-        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+    public String interpretation(SummaryRequest request, BigDecimal lynchFairValue, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
         Objects.requireNonNull(lynchFairValue, "Lynch Fair Value must not be null");
 
-        var request = extractRequest(summaryRequest);
-
-        if (request == null || request.sharePrice() == null) {
+        if (request.marketData() == null || request.marketData().sharePrice() == null || request.fundamentalData() == null) {
             return "Estimated fair value is " + lynchFairValue + ". Supply a share price to compare it against.";
         }
 
-        return "At a share price of " + request.sharePrice() + ", the stock looks " + assessment.label().toLowerCase()
+        return "At a share price of " + request.marketData().sharePrice() + ", the stock looks " + assessment.label().toLowerCase()
             + " against an estimated fair value of " + lynchFairValue + ".";
     }
 
     @Override
-    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
-        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+    public Optional<BigDecimal> calculate(SummaryRequest request) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
 
-        var request = extractRequest(summaryRequest);
 
-        if (request == null) {
+        if (request.marketData() == null || request.fundamentalData() == null) {
             return Optional.empty();
         }
 
-        var eps = request.eps();
-        var epsGrowthRate = request.epsGrowthRate();
+        var eps = request.marketData().eps();
+        var epsGrowthRate = request.fundamentalData().epsGrowthRate();
 
         if (eps == null || eps.signum() <= 0 || epsGrowthRate == null) {
             return Optional.empty();
@@ -105,17 +100,5 @@ public class LynchFairValueAssessor implements MetricAssessor {
             .setScale(2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private LynchFairValueRequest extractRequest(SummaryRequest request) {
-        if (request.marketData() == null || request.fundamentalData() == null) {
-            return null;
-        }
-
-        return new LynchFairValueRequest(
-            request.marketData().eps(),
-            request.fundamentalData().epsGrowthRate(),
-            request.marketData().sharePrice()
-        );
     }
 }
