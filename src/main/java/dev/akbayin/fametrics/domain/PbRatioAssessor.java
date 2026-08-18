@@ -55,6 +55,10 @@ public class PbRatioAssessor implements MetricAssessor {
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         PbRatioRequest request = extractRequest(summaryRequest);
+        if (request == null) {
+            return Optional.empty();
+        }
+
         var sharePrice = request.sharePrice();
         var bvps = request.bvps();
 
