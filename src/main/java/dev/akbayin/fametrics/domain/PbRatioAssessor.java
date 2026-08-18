@@ -81,7 +81,7 @@ public class PbRatioAssessor implements MetricAssessor {
     }
 
     private PbRatioRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.marketData() == null) {
+        if (request.marketData() == null) {
             return null;
         }
 
