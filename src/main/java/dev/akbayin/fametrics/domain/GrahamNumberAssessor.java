@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.GrahamRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +31,7 @@ public class GrahamNumberAssessor implements MetricAssessor {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
         Objects.requireNonNull(grahamNumber, "Graham Number must not be null");
 
-        var request = extractRequest(summaryRequest);
+        var request = summaryRequest.marketData();
         var benchmark = new Benchmark(
             null,
             grahamNumber,
@@ -72,7 +71,7 @@ public class GrahamNumberAssessor implements MetricAssessor {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
         Objects.requireNonNull(grahamNumber, "Graham Number must not be null");
 
-        var request = extractRequest(summaryRequest);
+        var request = summaryRequest.marketData();
 
         if (request == null || request.sharePrice() == null) {
             return "Estimated intrinsic value is " + grahamNumber
@@ -87,7 +86,7 @@ public class GrahamNumberAssessor implements MetricAssessor {
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
         Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
 
-        var request = extractRequest(summaryRequest);
+        var request = summaryRequest.marketData();
 
         if (request == null) {
             return Optional.empty();
@@ -109,17 +108,5 @@ public class GrahamNumberAssessor implements MetricAssessor {
             .setScale(2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
-    }
-
-    private GrahamRequest extractRequest(SummaryRequest request) {
-        if (request.marketData() == null) {
-            return null;
-        }
-
-        return new GrahamRequest(
-            request.marketData().eps(),
-            request.marketData().bvps(),
-            request.marketData().sharePrice()
-        );
     }
 }
