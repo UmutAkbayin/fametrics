@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -28,6 +29,9 @@ public class PegRatioAssessor implements MetricAssessor {
 
     @Override
     public MetricEvaluation evaluate(SummaryRequest request, BigDecimal pegRatio) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(pegRatio, "PegRatio must not be null");
+
         var benchmark = new Benchmark(
             UNDERVALUED_THRESHOLD,
             OVERVALUED_THRESHOLD,
@@ -49,11 +53,16 @@ public class PegRatioAssessor implements MetricAssessor {
 
     @Override
     public String interpretation(SummaryRequest request, BigDecimal pegRatio, Assessment assessment) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
+        Objects.requireNonNull(pegRatio, "PegRatio must not be null");
+
         return "At " + pegRatio + " the stock's PEG is considered " + assessment.label().toLowerCase() + ".";
     }
 
     @Override
     public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
         PegRatioRequest request = extractRequest(summaryRequest);
         if (request == null) {
             return Optional.empty();
@@ -77,7 +86,7 @@ public class PegRatioAssessor implements MetricAssessor {
     }
 
     private PegRatioRequest extractRequest(SummaryRequest request) {
-        if (request == null || request.marketData() == null || request.fundamentalData() == null) {
+        if (request.marketData() == null || request.fundamentalData() == null) {
             return null;
         }
 
