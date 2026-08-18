@@ -1,13 +1,16 @@
 package dev.akbayin.fametrics.domain;
 
 import dev.akbayin.fametrics.dto.LynchFairValueRequest;
+import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
-public class LynchFairValueAssessor implements MetricAssessor<LynchFairValueRequest> {
+public class LynchFairValueAssessor implements MetricAssessor {
 
     private static final BigDecimal UNDERVALUED_THRESHOLD = new BigDecimal("0.90");
     private static final BigDecimal OVERVALUED_THRESHOLD = new BigDecimal("1.10");
@@ -25,13 +28,24 @@ public class LynchFairValueAssessor implements MetricAssessor<LynchFairValueRequ
     }
 
     @Override
-    public MetricEvaluation evaluate(LynchFairValueRequest request, BigDecimal lynchFairValue) {
+    public MetricEvaluation evaluate(SummaryRequest summaryRequest, BigDecimal lynchFairValue) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+        Objects.requireNonNull(lynchFairValue, "Lynch Fair Value must not be null");
+
+        var request = extractRequest(summaryRequest);
         var benchmark = new Benchmark(
             null,
             lynchFairValue,
             "A share price at or below the Lynch Fair Value suggests the stock may be undervalued "
                 + "relative to its earnings growth rate."
         );
+
+        if (request == null) {
+            return new MetricEvaluation(
+                new Assessment(Rating.NOT_MEANINGFUL, "No market data or fundamental data provided for comparison"),
+                benchmark
+            );
+        }
 
         var sharePrice = request.sharePrice();
         if (sharePrice == null) {
@@ -55,13 +69,53 @@ public class LynchFairValueAssessor implements MetricAssessor<LynchFairValueRequ
     }
 
     @Override
-    public String interpretation(LynchFairValueRequest request, BigDecimal lynchFairValue, Assessment assessment) {
-        var sharePrice = request.sharePrice();
-        if (sharePrice == null) {
+    public String interpretation(SummaryRequest summaryRequest, BigDecimal lynchFairValue, Assessment assessment) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+        Objects.requireNonNull(lynchFairValue, "Lynch Fair Value must not be null");
+
+        var request = extractRequest(summaryRequest);
+
+        if (request == null || request.sharePrice() == null) {
             return "Estimated fair value is " + lynchFairValue + ". Supply a share price to compare it against.";
         }
 
-        return "At a share price of " + sharePrice + ", the stock looks " + assessment.label().toLowerCase()
+        return "At a share price of " + request.sharePrice() + ", the stock looks " + assessment.label().toLowerCase()
             + " against an estimated fair value of " + lynchFairValue + ".";
+    }
+
+    @Override
+    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
+        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+
+        var request = extractRequest(summaryRequest);
+
+        if (request == null) {
+            return Optional.empty();
+        }
+
+        var eps = request.eps();
+        var epsGrowthRate = request.epsGrowthRate();
+
+        if (eps == null || eps.signum() <= 0 || epsGrowthRate == null) {
+            return Optional.empty();
+        }
+
+        BigDecimal result = eps
+            .multiply(epsGrowthRate.multiply(new BigDecimal("100")))
+            .setScale(2, RoundingMode.HALF_UP);
+
+        return Optional.of(result);
+    }
+
+    private LynchFairValueRequest extractRequest(SummaryRequest request) {
+        if (request.marketData() == null || request.fundamentalData() == null) {
+            return null;
+        }
+
+        return new LynchFairValueRequest(
+            request.marketData().eps(),
+            request.fundamentalData().epsGrowthRate(),
+            request.marketData().sharePrice()
+        );
     }
 }
