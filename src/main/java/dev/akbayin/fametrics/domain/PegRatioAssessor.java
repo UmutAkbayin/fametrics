@@ -1,6 +1,5 @@
 package dev.akbayin.fametrics.domain;
 
-import dev.akbayin.fametrics.dto.PegRatioRequest;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.springframework.stereotype.Component;
 
@@ -60,40 +59,27 @@ public class PegRatioAssessor implements MetricAssessor {
     }
 
     @Override
-    public Optional<BigDecimal> calculate(SummaryRequest summaryRequest) {
-        Objects.requireNonNull(summaryRequest, "SummaryRequest must not be null");
+    public Optional<BigDecimal> calculate(SummaryRequest request) {
+        Objects.requireNonNull(request, "SummaryRequest must not be null");
 
-        PegRatioRequest request = extractRequest(summaryRequest);
-        if (request == null) {
+        if (request.fundamentalData() == null || request.marketData() == null) {
             return Optional.empty();
         }
 
-        var epsGrowthRate = request.epsGrowthRate();
+        var epsGrowthRate = request.fundamentalData().epsGrowthRate();
 
         if (epsGrowthRate == null || epsGrowthRate.signum() <= 0) {
             return Optional.empty();
         }
 
-        if (anyNonPositive(request.sharePrice(), request.eps())) {
+        if (anyNonPositive(request.marketData().sharePrice(), request.marketData().eps())) {
             return Optional.empty();
         }
 
-        var peRatio = request.sharePrice().divide(request.eps(), 2, RoundingMode.HALF_UP);
+        var peRatio = request.marketData().sharePrice().divide(request.marketData().eps(), 2, RoundingMode.HALF_UP);
 
         return Optional.of(
             peRatio.divide(epsGrowthRate.multiply(new BigDecimal("100")), 2, RoundingMode.HALF_UP)
-        );
-    }
-
-    private PegRatioRequest extractRequest(SummaryRequest request) {
-        if (request.marketData() == null || request.fundamentalData() == null) {
-            return null;
-        }
-
-        return new PegRatioRequest(
-            request.marketData().sharePrice(),
-            request.marketData().eps(),
-            request.fundamentalData().epsGrowthRate()
         );
     }
 }
