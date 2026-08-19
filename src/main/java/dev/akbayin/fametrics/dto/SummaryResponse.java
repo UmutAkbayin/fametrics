@@ -1,15 +1,7 @@
 package dev.akbayin.fametrics.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-public record SummaryResponse(
-    BigDecimal peTtm,
-    BigDecimal pbRatio,
-    BigDecimal psRatio,
-    BigDecimal pegRatio,
-    BigDecimal deRatio,
-    BigDecimal roeRatio,
-    BigDecimal grahamNumber,
-    BigDecimal lynchFairValue
-) {
+public record SummaryResponse(List<MetricResponse> metrics) {
 }
