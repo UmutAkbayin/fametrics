@@ -134,7 +134,7 @@ public class ValuationController {
             .orElse(ResponseEntity.unprocessableContent().build());
     }
 
-    @PostMapping("/summary")
+    @PostMapping("/summary/assessment")
     public ResponseEntity<SummaryResponse> getSummaryAssessment(@Valid @RequestBody SummaryRequest request) {
         return ResponseEntity.ok(valuationService.assessSummary(request));
     }

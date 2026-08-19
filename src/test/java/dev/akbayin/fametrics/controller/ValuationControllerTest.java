@@ -141,7 +141,7 @@ class ValuationControllerTest {
         when(valuationService.assessSummary(any(SummaryRequest.class)))
             .thenReturn(new SummaryResponse(metrics));
 
-        restTestClient.post().uri("/api/metrics/summary")
+        restTestClient.post().uri("/api/metrics/summary/assessment")
             .contentType(MediaType.APPLICATION_JSON)
             .body(validRequest())
             .exchange()
@@ -158,7 +158,7 @@ class ValuationControllerTest {
         when(valuationService.assessSummary(any(SummaryRequest.class)))
             .thenReturn(new SummaryResponse(List.of()));
 
-        restTestClient.post().uri("/api/metrics/summary")
+        restTestClient.post().uri("/api/metrics/summary/assessment")
             .contentType(MediaType.APPLICATION_JSON)
             .body(validRequest())
             .exchange()
