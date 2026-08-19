@@ -1,17 +1,19 @@
 package dev.akbayin.fametrics.controller;
 
-import dev.akbayin.fametrics.dto.DeRatioRequest;
-import dev.akbayin.fametrics.dto.GrahamRequest;
-import dev.akbayin.fametrics.dto.LynchFairValueRequest;
-import dev.akbayin.fametrics.dto.PbRatioRequest;
-import dev.akbayin.fametrics.dto.PeTtmRequest;
-import dev.akbayin.fametrics.dto.PegRatioRequest;
-import dev.akbayin.fametrics.dto.PsRatioRequest;
-import dev.akbayin.fametrics.dto.RoeRequest;
+import dev.akbayin.fametrics.domain.Assessment;
+import dev.akbayin.fametrics.domain.Benchmark;
+import dev.akbayin.fametrics.domain.Metric;
+import dev.akbayin.fametrics.domain.Rating;
+import dev.akbayin.fametrics.dto.CapitalStructure;
+import dev.akbayin.fametrics.dto.FundamentalData;
+import dev.akbayin.fametrics.dto.MarketData;
+import dev.akbayin.fametrics.dto.MetricResponse;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import dev.akbayin.fametrics.dto.SummaryResponse;
 import dev.akbayin.fametrics.service.ValuationService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -21,15 +23,30 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest
 @AutoConfigureRestTestClient
 class ValuationControllerTest {
+
+    private static final BigDecimal VALUE = new BigDecimal("13.78");
+
+    private static final Map<Metric, String> VALUE_PATHS = Map.ofEntries(
+        Map.entry(Metric.PE_TTM, "/pe-ttm"),
+        Map.entry(Metric.PB_RATIO, "/pb"),
+        Map.entry(Metric.PS_RATIO, "/ps"),
+        Map.entry(Metric.PEG_RATIO, "/peg"),
+        Map.entry(Metric.DE_RATIO, "/de"),
+        Map.entry(Metric.ROE, "/roe"),
+        Map.entry(Metric.GRAHAM_NUMBER, "/graham"),
+        Map.entry(Metric.LYNCH_FAIR_VALUE, "/lynch")
+    );
 
     @Autowired
     RestTestClient restTestClient;
@@ -37,451 +54,117 @@ class ValuationControllerTest {
     @MockitoBean
     ValuationService valuationService;
 
-    @Test
-    void getGrahamNumber_withValidRequest_shouldReturnStatus200() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
-
-        when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("56.05")));
-
-        restTestClient.post().uri("/api/metrics/graham")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getGrahamNumber_withNonPositiveEps_shouldReturnStatus400() {
-        var request = new GrahamRequest(BigDecimal.ZERO, new BigDecimal("47.65"), null);
-
-        restTestClient.post().uri("/api/metrics/graham")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.eps").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getGrahamNumber_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new GrahamRequest(new BigDecimal("2.93"), new BigDecimal("47.65"), null);
-
-        when(valuationService.calculateGrahamNumber(any(GrahamRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/graham")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getPeTtm_withValidRequest_shouldReturnStatus200() {
-        var request = new PeTtmRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
-
-        when(valuationService.calculatePeTtm(any(PeTtmRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("13.78")));
-
-        restTestClient.post().uri("/api/metrics/pe-ttm")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getPeTtm_withNonPositiveEps_shouldReturnStatus400() {
-        var request = new PeTtmRequest(BigDecimal.ZERO, new BigDecimal("2.93"));
-
-        restTestClient.post().uri("/api/metrics/pe-ttm")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.sharePrice").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getPeTtm_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new PeTtmRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
-
-        when(valuationService.calculatePeTtm(any(PeTtmRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/pe-ttm")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getPbRatio_withValidRequest_shouldReturnStatus200() {
-        var request = new PbRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
-
-        when(valuationService.calculatePbRatio(any(PbRatioRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("13.78")));
-
-        restTestClient.post().uri("/api/metrics/pb")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getPbRatio_withNonPositiveBvps_shouldReturnStatus400() {
-        var request = new PbRatioRequest(BigDecimal.ZERO, new BigDecimal("2.93"));
-
-        restTestClient.post().uri("/api/metrics/pb")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.sharePrice").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getPbRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new PbRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"));
-
-        when(valuationService.calculatePbRatio(any(PbRatioRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/pb")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getPsRatio_withValidRequest_shouldReturnStatus200() {
-        var request = new PsRatioRequest(new BigDecimal("50"), new BigDecimal("100"));
-
-        when(valuationService.calculatePsRatio(any(PsRatioRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("0.50")));
-
-        restTestClient.post().uri("/api/metrics/ps")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getPsRatio_withNonPositiveMarketCap_shouldReturnStatus400() {
-        var request = new PbRatioRequest(BigDecimal.ZERO, new BigDecimal("100"));
-
-        restTestClient.post().uri("/api/metrics/ps")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.marketCap").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getPsRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new PsRatioRequest(new BigDecimal("50"), new BigDecimal("100"));
-
-        when(valuationService.calculatePsRatio(any(PsRatioRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/ps")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getPegRatio_withValidRequest_shouldReturnStatus200() {
-        var request = new PegRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"), new BigDecimal("0.15"));
-
-        when(valuationService.calculatePegRatio(any(PegRatioRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("0.92")));
-
-        restTestClient.post().uri("/api/metrics/peg")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getPegRatio_withNonPositiveSharePrice_shouldReturnStatus400() {
-        var request = new PegRatioRequest(BigDecimal.ZERO, new BigDecimal("2.93"), new BigDecimal("0.15"));
-
-        restTestClient.post().uri("/api/metrics/peg")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.sharePrice").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getPegRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new PegRatioRequest(new BigDecimal("40.38"), new BigDecimal("2.93"), new BigDecimal("0.15"));
-
-        when(valuationService.calculatePegRatio(any(PegRatioRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/peg")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getDeRatio_withValidRequest_shouldReturnStatus200() {
-        var request = new DeRatioRequest(new BigDecimal("150000"), new BigDecimal("100000"));
-
-        when(valuationService.calculateDeRatio(any(DeRatioRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("1.50")));
-
-        restTestClient.post().uri("/api/metrics/de")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getDeRatio_withNegativeTotalLiabilities_shouldReturnStatus400() {
-        var request = new DeRatioRequest(new BigDecimal("-1"), new BigDecimal("100000"));
-
-        restTestClient.post().uri("/api/metrics/de")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.totalLiabilities").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getDeRatio_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new DeRatioRequest(new BigDecimal("150000"), new BigDecimal("100000"));
-
-        when(valuationService.calculateDeRatio(any(DeRatioRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/de")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getRoe_withValidRequest_shouldReturnStatus200() {
-        var request = new RoeRequest(new BigDecimal("15000"), new BigDecimal("100000"));
-
-        when(valuationService.calculateRoe(any(RoeRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("0.15")));
-
-        restTestClient.post().uri("/api/metrics/roe")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getRoe_withNonPositiveTotalEquity_shouldReturnStatus400() {
-        var request = new RoeRequest(new BigDecimal("15000"), BigDecimal.ZERO);
-
-        restTestClient.post().uri("/api/metrics/roe")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.totalEquity").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getRoe_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new RoeRequest(new BigDecimal("15000"), new BigDecimal("100000"));
-
-        when(valuationService.calculateRoe(any(RoeRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/roe")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getLynchFairValue_withValidRequest_shouldReturnStatus200() {
-        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"), null);
-
-        when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
-            .thenReturn(Optional.of(new BigDecimal("43.95")));
-
-        restTestClient.post().uri("/api/metrics/lynch")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isOk();
-    }
-
-    @Test
-    void getLynchFairValue_withNonPositiveEps_shouldReturnStatus400() {
-        var request = new LynchFairValueRequest(BigDecimal.ZERO, new BigDecimal("0.15"), null);
-
-        restTestClient.post().uri("/api/metrics/lynch")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isBadRequest()
-            .expectBody()
-            .jsonPath("$.eps").isNotEmpty();
-
-        verifyNoInteractions(valuationService);
-    }
-
-    @Test
-    void getLynchFairValue_whenServiceReturnsEmpty_shouldReturnStatus422() {
-        var request = new LynchFairValueRequest(new BigDecimal("2.93"), new BigDecimal("0.15"), null);
-
-        when(valuationService.calculateLynchFairValue(any(LynchFairValueRequest.class)))
-            .thenReturn(Optional.empty());
-
-        restTestClient.post().uri("/api/metrics/lynch")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
-            .exchange()
-            .expectStatus()
-            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
-    }
-
-    @Test
-    void getSummary_withValidRequest_shouldReturnStatus200() {
-        var request = new SummaryRequest(
-            new BigDecimal("40.38"),
-            new BigDecimal("2.93"),
-            new BigDecimal("47.65"),
-            new BigDecimal("50"),
-            new BigDecimal("100"),
-            new BigDecimal("0.15"),
-            new BigDecimal("150000"),
-            new BigDecimal("100000"),
-            new BigDecimal("15000")
+    private static SummaryRequest validRequest() {
+        return new SummaryRequest(
+            new MarketData(new BigDecimal("40.38"), new BigDecimal("2.93"), new BigDecimal("47.65")),
+            new FundamentalData(new BigDecimal("50"), new BigDecimal("100"), new BigDecimal("0.15")),
+            new CapitalStructure(new BigDecimal("150000"), new BigDecimal("100000"), new BigDecimal("15000"))
         );
+    }
 
-        var response = new SummaryResponse(
-            new BigDecimal("13.78"),
-            new BigDecimal("0.85"),
-            new BigDecimal("0.50"),
-            new BigDecimal("0.92"),
-            new BigDecimal("1.50"),
-            new BigDecimal("0.15"),
-            new BigDecimal("56.05"),
-            new BigDecimal("43.95")
+    private static MetricResponse metricResponse(Metric metric) {
+        return new MetricResponse(
+            metric,
+            VALUE,
+            new Assessment(Rating.FAVORABLE, "Low"),
+            new Benchmark(new BigDecimal("1"), new BigDecimal("2"), "explanation"),
+            "description",
+            "interpretation"
         );
+    }
 
-        when(valuationService.calculateSummary(any(SummaryRequest.class)))
-            .thenReturn(response);
+    @ParameterizedTest
+    @EnumSource(Metric.class)
+    void getValue_whenServiceReturnsValue_shouldReturnStatus200(Metric metric) {
+        when(valuationService.calculate(any(SummaryRequest.class), eq(metric)))
+            .thenReturn(Optional.of(VALUE));
 
-        restTestClient.post().uri("/api/metrics/summary")
+        restTestClient.post().uri("/api/metrics" + VALUE_PATHS.get(metric))
             .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
+            .body(validRequest())
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody(BigDecimal.class)
+            .isEqualTo(VALUE);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Metric.class)
+    void getValue_whenServiceReturnsEmpty_shouldReturnStatus422(Metric metric) {
+        when(valuationService.calculate(any(SummaryRequest.class), eq(metric)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics" + VALUE_PATHS.get(metric))
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(validRequest())
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Metric.class)
+    void getAssessment_whenServiceReturnsValue_shouldReturnStatus200(Metric metric) {
+        when(valuationService.assess(any(SummaryRequest.class), eq(metric)))
+            .thenReturn(Optional.of(metricResponse(metric)));
+
+        restTestClient.post().uri("/api/metrics" + VALUE_PATHS.get(metric) + "/assessment")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(validRequest())
             .exchange()
             .expectStatus()
             .isOk()
             .expectBody()
-            .jsonPath("$.peTtm").isEqualTo(13.78)
-            .jsonPath("$.grahamNumber").isEqualTo(56.05);
+            .jsonPath("$.metric").isEqualTo(metric.name())
+            .jsonPath("$.value").isEqualTo(13.78);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Metric.class)
+    void getAssessment_whenServiceReturnsEmpty_shouldReturnStatus422(Metric metric) {
+        when(valuationService.assess(any(SummaryRequest.class), eq(metric)))
+            .thenReturn(Optional.empty());
+
+        restTestClient.post().uri("/api/metrics" + VALUE_PATHS.get(metric) + "/assessment")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(validRequest())
+            .exchange()
+            .expectStatus()
+            .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test
-    void getSummary_whenServiceReturnsPartialResult_shouldReturnStatus200WithNullFields() {
-        var request = new SummaryRequest(
-            new BigDecimal("40.38"),
-            new BigDecimal("2.93"),
-            new BigDecimal("47.65"),
-            null,
-            null,
-            null,
-            new BigDecimal("150000"),
-            new BigDecimal("100000"),
-            new BigDecimal("15000")
-        );
+    void getSummaryAssessment_shouldReturnStatus200WithAllMetrics() {
+        var metrics = List.of(metricResponse(Metric.PE_TTM), metricResponse(Metric.GRAHAM_NUMBER));
 
-        var response = new SummaryResponse(
-            new BigDecimal("13.78"),
-            new BigDecimal("0.85"),
-            null,
-            null,
-            new BigDecimal("1.50"),
-            new BigDecimal("0.15"),
-            new BigDecimal("56.05"),
-            null
-        );
-
-        when(valuationService.calculateSummary(any(SummaryRequest.class)))
-            .thenReturn(response);
+        when(valuationService.assessSummary(any(SummaryRequest.class)))
+            .thenReturn(new SummaryResponse(metrics));
 
         restTestClient.post().uri("/api/metrics/summary")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
+            .body(validRequest())
             .exchange()
             .expectStatus()
             .isOk()
             .expectBody()
-            .jsonPath("$.psRatio").isEqualTo(null)
-            .jsonPath("$.pegRatio").isEqualTo(null)
-            .jsonPath("$.lynchFairValue").isEqualTo(null)
-            .jsonPath("$.peTtm").isEqualTo(13.78);
+            .jsonPath("$.metrics.length()").isEqualTo(2)
+            .jsonPath("$.metrics[0].metric").isEqualTo(Metric.PE_TTM.name())
+            .jsonPath("$.metrics[1].metric").isEqualTo(Metric.GRAHAM_NUMBER.name());
+    }
+
+    @Test
+    void getSummaryAssessment_whenServiceReturnsNoMetrics_shouldReturnStatus200WithEmptyList() {
+        when(valuationService.assessSummary(any(SummaryRequest.class)))
+            .thenReturn(new SummaryResponse(List.of()));
+
+        restTestClient.post().uri("/api/metrics/summary")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(validRequest())
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody()
+            .jsonPath("$.metrics.length()").isEqualTo(0);
     }
 }
