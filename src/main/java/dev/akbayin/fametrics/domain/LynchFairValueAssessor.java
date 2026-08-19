@@ -53,7 +53,7 @@ public class LynchFairValueAssessor implements MetricAssessor {
             );
         }
 
-        var ratio = sharePrice.divide(lynchFairValue, 4, RoundingMode.HALF_UP);
+        var ratio = sharePrice.divide(lynchFairValue, 2, RoundingMode.HALF_UP);
         Assessment assessment;
         if (ratio.compareTo(UNDERVALUED_THRESHOLD) <= 0) {
             assessment = new Assessment(Rating.FAVORABLE, "Undervalued");
