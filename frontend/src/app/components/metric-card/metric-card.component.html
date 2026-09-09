@@ -1,0 +1,72 @@
+<mat-card class="metric-card glass-panel" [ngClass]="{'has-value': hasValue(), 'loading': loading()}">
+  <!-- Card Header -->
+  <mat-card-header class="card-header">
+    <div class="header-main">
+      <mat-card-title class="card-title">{{ abbreviation() }}</mat-card-title>
+      <span class="formula-badge">{{ formula() }}</span>
+    </div>
+    <span class="card-subtitle-full">{{ title() }}</span>
+  </mat-card-header>
+
+  <!-- Card Content -->
+  <mat-card-content class="card-body">
+    @if (loading()) {
+      <!-- Shimmer Loader -->
+      <div class="shimmer-wrapper">
+        <div class="shimmer-number"></div>
+        <div class="shimmer-bar"></div>
+      </div>
+    } @else {
+      @if (hasValue()) {
+        <!-- Active Value -->
+        <div class="value-display float-effect" [ngClass]="displayState().statusClass">
+          @if (metricId() === 'GRAHAM_NUMBER' || metricId() === 'LYNCH_FAIR_VALUE') {
+            <span class="currency-symbol">$</span>
+          }
+
+          @if (metricId() === 'ROE') {
+            {{ ((metricResult()?.value ?? 0) * 100) | number:'1.2-2' }}
+            <span class="percentage-symbol">%</span>
+          } @else {
+            {{ metricResult()?.value }}
+          }
+        </div>
+      } @else {
+        <!-- Pending State (Inputs Missing) -->
+        <div class="pending-state">
+          <mat-icon class="material-symbols-outlined pending-icon">info</mat-icon>
+          <span class="pending-text">Awaiting Inputs</span>
+          <div class="missing-inputs-list">
+            @for (fieldName of missingInputs(); track fieldName) {
+              <span class="missing-tag">{{ fieldName }}</span>
+            }
+          </div>
+        </div>
+      }
+    }
+  </mat-card-content>
+
+  <!-- Card Footer (Interpretation / Gauges) -->
+  @if (!loading() && hasValue()) {
+    <mat-card-actions class="card-footer">
+      <div class="gauge-section">
+        <div class="gauge-meta">
+          <span class="gauge-label glow-badge" [ngClass]="displayState().statusClass">
+            {{ displayState().label }}
+          </span>
+          <mat-icon class="material-symbols-outlined help-icon" [matTooltip]="displayState().hint">help_outline</mat-icon>
+        </div>
+        <div class="custom-gauge-container">
+          <!-- Progress bar matching status color -->
+          <div class="custom-gauge-track">
+            <div class="custom-gauge-bar"
+                 [ngClass]="displayState().statusClass"
+                 [style.width.%]="displayState().percentage"></div>
+          </div>
+        </div>
+      </div>
+    </mat-card-actions>
+  }
+</mat-card>
+
+

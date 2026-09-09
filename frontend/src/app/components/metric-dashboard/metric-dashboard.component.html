@@ -1,0 +1,155 @@
+<div class="dashboard-wrapper">
+  <!-- Title and Overview Banner -->
+  <div class="overview-banner">
+    <h1 class="dashboard-title">Interactive Valuation Workspace</h1>
+    <p class="dashboard-lead">
+      Input raw financial variables below to compute fundamental valuation metrics in real-time.
+    </p>
+  </div>
+
+  <!-- Main Grid Workspace -->
+  <div class="workspace-grid">
+    
+    <!-- Left Panel: Inputs -->
+    <div class="inputs-panel glass-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <mat-icon class="material-symbols-outlined header-icon">bar_chart</mat-icon>
+          Financial Inputs
+        </h2>
+        <button mat-button class="sample-btn" (click)="loadSampleData()" [disabled]="loading()">
+          Load Sample
+        </button>
+      </div>
+
+      <form [formGroup]="inputForm" (ngSubmit)="calculate()" class="inputs-form">
+        <!-- Section 1: Valuation Inputs -->
+        <div class="form-section">
+          <h3 class="section-subtitle">Market Pricing</h3>
+          <div class="fields-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Share Price ($)</mat-label>
+              <input matInput type="number" formControlName="sharePrice" placeholder="e.g. 150">
+              @if (inputForm.get('sharePrice')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Earnings Per Share ($)</mat-label>
+              <input matInput type="number" formControlName="eps" placeholder="e.g. 7.50">
+              @if (inputForm.get('eps')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Book Value Per Share ($)</mat-label>
+              <input matInput type="number" formControlName="bvps" placeholder="e.g. 45">
+              @if (inputForm.get('bvps')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Section 2: Revenues & Growth -->
+        <div class="form-section">
+          <h3 class="section-subtitle">Size & Growth</h3>
+          <div class="fields-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Market Cap ($)</mat-label>
+              <input matInput type="number" formControlName="marketCap" placeholder="e.g. 750000000">
+              @if (inputForm.get('marketCap')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Total Revenue ($)</mat-label>
+              <input matInput type="number" formControlName="totalRevenue" placeholder="e.g. 50000000">
+              @if (inputForm.get('totalRevenue')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>EPS Growth Rate (%)</mat-label>
+              <input matInput type="number" formControlName="epsGrowthRate" placeholder="e.g. 12">
+              @if (inputForm.get('epsGrowthRate')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Section 3: Balance Sheet -->
+        <div class="form-section">
+          <h3 class="section-subtitle">Capital Structure</h3>
+          <div class="fields-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Total Liabilities ($)</mat-label>
+              <input matInput type="number" formControlName="totalLiabilities" placeholder="e.g. 20000000">
+              @if (inputForm.get('totalLiabilities')?.hasError('min')) {
+                <mat-error>Must be non-negative (>= 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Total Equity ($)</mat-label>
+              <input matInput type="number" formControlName="totalEquity" placeholder="e.g. 80000000">
+              @if (inputForm.get('totalEquity')?.hasError('min')) {
+                <mat-error>Must be positive (> 0)</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Net Income ($)</mat-label>
+              <input matInput type="number" formControlName="netIncome" placeholder="e.g. 12000000">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Form Buttons -->
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" class="submit-btn" [disabled]="loading()">
+            <mat-icon class="material-symbols-outlined">calculate</mat-icon>
+            Calculate Metrics
+          </button>
+          <button mat-button type="button" class="reset-btn" (click)="reset()" [disabled]="loading()">
+            Reset
+          </button>
+        </div>
+
+        <!-- Error Alert -->
+        @if (errorMessage()) {
+          <div class="error-alert">
+            <mat-icon class="material-symbols-outlined">error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+      </form>
+    </div>
+
+    <!-- Right Panel: Results Grid -->
+    <div class="results-panel">
+      <div class="grid-container">
+        @for (m of metrics; track m.id) {
+          <app-metric-card 
+            [title]="m.title"
+            [abbreviation]="m.abbreviation"
+            [formula]="m.formula"
+            [metricId]="m.id"
+            [metricResult]="getMetricResult(m.id)"
+            [loading]="loading()"
+            [requiredInputs]="m.required"
+            [missingInputs]="getMissingInputs(m.id)"
+            [sharePrice]="currentSharePrice">
+          </app-metric-card>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>
+

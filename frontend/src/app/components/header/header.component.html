@@ -1,0 +1,27 @@
+<mat-toolbar class="header-toolbar">
+  <div class="header-container">
+    <!-- Logo and Brand -->
+    <div class="brand-section">
+      <span class="brand-title">fa-metrics</span>
+      <span class="glow-badge warning version-tag">Valuation Engine</span>
+    </div>
+
+    <!-- Status and Controls -->
+    <div class="actions-section">
+      <!-- Simulated Environment Banner -->
+      <div class="status-indicator">
+        <span class="status-dot animate-pulse"></span>
+        <span class="status-text">Simulator Active</span>
+      </div>
+
+      <!-- Theme Selector Toggle -->
+      <div class="theme-toggle-wrapper">
+        <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle dark/light theme" class="theme-btn">
+          <mat-icon class="material-symbols-outlined">
+            {{ isDarkMode() ? 'light_mode' : 'dark_mode' }}
+          </mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</mat-toolbar>

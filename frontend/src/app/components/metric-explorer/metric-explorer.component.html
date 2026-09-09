@@ -1,0 +1,125 @@
+<div class="explorer-wrapper">
+  <!-- Left Side: Metric Selector Menu -->
+  <div class="sidebar glass-panel">
+    <h2 class="sidebar-title">Metrics Index</h2>
+    <mat-selection-list [multiple]="false" class="metrics-list">
+      @for (m of metricDetails | keyvalue; track m.key) {
+        <mat-list-option
+          [selected]="m.key === selectedMetricId()"
+          (click)="selectMetric(m.key)"
+          class="metric-option">
+          <div class="option-content">
+            <span class="abbr">{{ m.value.abbreviation }}</span>
+            <span class="full-name">{{ m.value.name }}</span>
+          </div>
+        </mat-list-option>
+      }
+    </mat-selection-list>
+  </div>
+
+  <!-- Right Side: Details and Focused Playground -->
+  <div class="details-panel glass-panel">
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="title-row">
+        <h1 class="metric-title">{{ selectedMetric().name }}</h1>
+        <span class="glow-badge warning">{{ selectedMetric().abbreviation }}</span>
+      </div>
+      <p class="metric-formula-text">Formula: <code>{{ selectedMetric().formula }}</code></p>
+    </div>
+
+    <!-- Layout Grid -->
+    <div class="panel-grid">
+      <!-- Info and Theory -->
+      <div class="theory-section">
+        <div class="info-card">
+          <h3 class="section-title">What is it?</h3>
+          <p class="section-desc">{{ selectedMetric().description }}</p>
+        </div>
+
+        <div class="math-block float-effect">
+          <span class="math-title">MATHEMATICAL MODEL</span>
+          <div class="math-formula">
+            <code>{{ selectedMetric().formula }}</code>
+          </div>
+        </div>
+
+        <div class="info-card benchmark-card">
+          <h3 class="section-title">Interpretation Guidelines</h3>
+          <p class="section-desc">{{ selectedMetric().interpretationGuide }}</p>
+          <div class="benchmark-range">
+            <span class="benchmark-label">Reference Range:</span>
+            <code class="benchmark-val">{{ selectedMetric().benchmark }}</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Focused Calculator Playground -->
+      <div class="calculator-section glass-panel">
+        <h3 class="calc-title">
+          <mat-icon class="material-symbols-outlined">calculate</mat-icon>
+          Focused Calculator
+        </h3>
+
+        <form [formGroup]="playgroundForm" (ngSubmit)="calculate()" class="calc-form">
+          <!-- Dynamic Input Fields -->
+          @for (input of selectedMetric().inputs; track input.name) {
+            <div class="input-item">
+              <mat-form-field appearance="outline" class="explorer-form-field">
+                <mat-label>{{ input.label }}</mat-label>
+                <input matInput type="number" [formControlName]="input.name" [placeholder]="input.placeholder">
+                @if (playgroundForm.get(input.name)?.invalid) {
+                  <mat-error>
+                    Valid input is required
+                  </mat-error>
+                }
+              </mat-form-field>
+            </div>
+          }
+
+          <!-- Buttons -->
+          <div class="calc-actions">
+            <button mat-raised-button color="primary" type="submit" class="calc-submit-btn" [disabled]="loading()">
+              Compute Metric
+            </button>
+          </div>
+        </form>
+
+        <!-- Result Box -->
+        <div class="calc-result-box" [class]="{'has-result': result() !== null, 'loading': loading()}">
+          <span class="result-label">Calculated Output</span>
+
+          @if (loading()) {
+            <div class="result-spinner">
+              <div class="spinner-dot animate-pulse"></div>
+              <span>Computing...</span>
+            </div>
+          } @else if (result() !== null) {
+            <div class="result-value">
+              @if (selectedMetricId() === 'grahamNumber' || selectedMetricId() === 'lynchFairValue') {
+                <span class="unit">$</span>
+              }
+              {{ result() }}
+              @if (selectedMetricId() === 'roeRatio') {
+                <span class="unit">%</span>
+              }
+            </div>
+          } @else if (!errorMessage()) {
+            <div class="result-empty">
+              Enter inputs above and click Compute.
+            </div>
+          }
+
+          @if (errorMessage()) {
+            <div class="result-error">
+              <mat-icon class="material-symbols-outlined">error</mat-icon>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

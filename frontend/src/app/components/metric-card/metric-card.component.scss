@@ -1,0 +1,250 @@
+.metric-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+
+  &.has-value {
+    border-color: rgba(99, 102, 241, 0.15);
+  }
+
+  &.loading {
+    border-color: var(--card-border);
+  }
+}
+
+.card-header {
+  padding: 0 0 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: var(--font-family);
+    color: var(--text-primary);
+  }
+
+  .formula-badge {
+    font-family: monospace;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+  }
+
+  .card-subtitle-full {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+}
+
+.card-body {
+  padding: 24px 0;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.value-display {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-align: center;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+
+  .currency-symbol {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-right: 2px;
+  }
+
+  .percentage-symbol {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-left: 2px;
+  }
+
+  &.positive {
+    color: var(--metric-positive);
+    text-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+  }
+
+  &.negative {
+    color: var(--metric-negative);
+    text-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+  }
+
+  &.warning {
+    color: var(--metric-warning);
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+  }
+
+  &.neutral {
+    color: var(--text-primary);
+  }
+}
+
+.pending-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--text-secondary);
+
+  .pending-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--text-secondary);
+    opacity: 0.4;
+  }
+
+  .pending-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.6;
+  }
+
+  .missing-inputs-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 4px;
+
+    .missing-tag {
+      font-size: 0.65rem;
+      font-family: monospace;
+      padding: 1px 5px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+  }
+}
+
+.card-footer {
+  padding: 12px 0 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.gauge-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .gauge-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    .gauge-label {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+    }
+
+    .help-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.custom-gauge-container {
+  width: 100%;
+
+  .custom-gauge-track {
+    height: 6px;
+    background: var(--gauge-track);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .custom-gauge-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.positive { background-color: var(--metric-positive); }
+    &.negative { background-color: var(--metric-negative); }
+    &.warning { background-color: var(--metric-warning); }
+    &.neutral { background-color: var(--text-secondary); }
+  }
+}
+
+// Shimmer Loader styling
+.shimmer-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.shimmer-number {
+  width: 100px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+}
+
+.shimmer-bar {
+  width: 140px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
