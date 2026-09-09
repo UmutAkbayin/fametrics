@@ -5,6 +5,7 @@ import dev.akbayin.fametrics.domain.MetricAssessor;
 import dev.akbayin.fametrics.dto.MetricResponse;
 import dev.akbayin.fametrics.dto.SummaryRequest;
 import dev.akbayin.fametrics.dto.SummaryResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ValuationService {
 
@@ -39,6 +41,7 @@ public class ValuationService {
     public Optional<BigDecimal> calculate(SummaryRequest request, Metric metric) {
         MetricAssessor assessor = assessorMap.get(metric);
         if (assessor == null) {
+            log.warn("No assessor registered for metric {}", metric);
             return Optional.empty();
         }
         return assessor.calculate(request);
@@ -47,6 +50,7 @@ public class ValuationService {
     public Optional<MetricResponse> assess(SummaryRequest request, Metric metric) {
         MetricAssessor assessor = assessorMap.get(metric);
         if (assessor == null) {
+            log.warn("No assessor registered for metric {}", metric);
             return Optional.empty();
         }
 
