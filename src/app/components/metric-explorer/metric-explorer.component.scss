@@ -1,0 +1,372 @@
+.explorer-wrapper {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+// Left Sidebar Menu
+.sidebar {
+  padding: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  height: fit-content;
+
+  .sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-family: var(--font-family);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 12px;
+  }
+}
+
+.metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: transparent !important;
+  padding: 0;
+
+  .mat-mdc-list-option {
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    margin-bottom: 6px;
+    height: 60px !important;
+    background: rgba(255, 255, 255, 0.02);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(99, 102, 241, 0.15);
+    }
+
+    &.mdc-list-item--selected, &[aria-selected="true"] {
+      background: rgba(99, 102, 241, 0.12) !important;
+      border-color: var(--accent-color);
+      color: #a5b4fc;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+
+      .abbr {
+        color: white;
+        background: var(--accent-color);
+      }
+    }
+  }
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+
+  .abbr {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    min-width: 75px;
+    text-align: center;
+  }
+
+  .full-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// Right Details Panel
+.details-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 32px;
+  border-radius: 16px;
+  min-height: 500px;
+
+  .panel-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 8px;
+
+      .metric-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--text-primary);
+        font-family: var(--font-family);
+        margin: 0;
+      }
+    }
+
+    .metric-formula-text {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+
+      code {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #a5b4fc;
+        font-family: monospace;
+      }
+    }
+  }
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  align-items: start;
+}
+
+// Theory Section
+.theory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.info-card {
+  .section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .section-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+}
+
+.math-block {
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  .math-title {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+  }
+
+  .math-formula {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    font-family: monospace;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+}
+
+.benchmark-card {
+  border-left: 3px solid var(--accent-color);
+  padding-left: 16px;
+
+  .benchmark-range {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+
+    .benchmark-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .benchmark-val {
+      font-family: monospace;
+      color: var(--text-primary);
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  }
+}
+
+// Focused Calculator Section
+.calculator-section {
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+
+  .calc-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 12px;
+
+    mat-icon {
+      color: var(--accent-color);
+    }
+  }
+}
+
+.calc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.explorer-form-field {
+  width: 100%;
+}
+
+.calc-actions {
+  margin-top: 4px;
+}
+
+.calc-submit-btn {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+// Result Box
+.calc-result-box {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  transition: all 0.3s ease;
+
+  .result-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .result-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--metric-positive);
+    display: flex;
+    align-items: baseline;
+
+    .unit {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin: 0 2px;
+    }
+  }
+
+  .result-empty {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .result-spinner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+
+    .spinner-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-color);
+    }
+  }
+
+  .result-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--metric-negative);
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--metric-negative);
+    }
+  }
+
+  &.has-result {
+    border-color: var(--metric-positive);
+    background: rgba(16, 185, 129, 0.08);
+  }
+}
+
+// Responsiveness
+@media (max-width: 1024px) {
+  .explorer-wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-section {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .details-panel {
+    padding: 16px;
+  }
+  
+  .math-formula {
+    font-size: 1.1rem;
+  }
+}

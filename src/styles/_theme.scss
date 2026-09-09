@@ -1,0 +1,89 @@
+@use '@angular/material' as mat;
+
+// Core styles required for Angular Material
+@include mat.core();
+
+// Define default M3 themes. The detailed colors are generated automatically by Material 3,
+// and we customize them dynamically using CSS custom properties (tokens) below.
+$theme-dark: mat.define-theme((
+  color: (
+    theme-type: dark
+  ),
+  typography: (
+    brand-family: 'Outfit',
+    plain-family: 'Outfit'
+  )
+));
+
+$theme-light: mat.define-theme((
+  color: (
+    theme-type: light
+  ),
+  typography: (
+    brand-family: 'Outfit',
+    plain-family: 'Outfit'
+  )
+));
+
+// Global variables for custom dashboard design tokens
+:root {
+  --font-family: 'Outfit', sans-serif;
+  --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 50%, #030712 100%);
+  --card-bg: rgba(30, 41, 59, 0.45);
+  --card-border: rgba(148, 163, 184, 0.08);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --card-glow: rgba(99, 102, 241, 0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.4);
+  
+  // Financial status/evaluation colors
+  --metric-positive: #10b981;
+  --metric-negative: #f43f5e;
+  --metric-neutral: #cbd5e1;
+  --metric-warning: #fbbf24;
+  --gauge-track: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(15, 23, 42, 0.6);
+  --header-bg: rgba(15, 23, 42, 0.7);
+  --header-border: rgba(255, 255, 255, 0.05);
+
+  // Material 3 CSS variable overrides for dark mode
+  --mat-sys-primary: #818cf8;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #312e81;
+  --mat-sys-on-primary-container: #e0e7ff;
+  --mat-sys-surface: rgba(30, 41, 59, 0.45);
+  --mat-sys-on-surface: #f8fafc;
+  --mat-sys-on-surface-variant: #94a3b8;
+}
+
+html.light-mode {
+  --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-border: rgba(79, 70, 229, 0.12);
+  --card-shadow: 0 8px 32px 0 rgba(148, 163, 184, 0.2);
+  --card-glow: rgba(79, 70, 229, 0.06);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent-color: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.2);
+  
+  --metric-positive: #059669;
+  --metric-negative: #e11d48;
+  --metric-neutral: #475569;
+  --metric-warning: #d97706;
+  --gauge-track: rgba(0, 0, 0, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --header-bg: rgba(255, 255, 255, 0.8);
+  --header-border: rgba(0, 0, 0, 0.05);
+
+  // Material 3 CSS variable overrides for light mode
+  --mat-sys-primary: #4f46e5;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #e0e7ff;
+  --mat-sys-on-primary-container: #312e81;
+  --mat-sys-surface: rgba(255, 255, 255, 0.75);
+  --mat-sys-on-surface: #0f172a;
+  --mat-sys-on-surface-variant: #475569;
+}

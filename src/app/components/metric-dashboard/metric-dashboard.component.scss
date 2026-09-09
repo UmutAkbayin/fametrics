@@ -1,0 +1,218 @@
+.dashboard-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.overview-banner {
+  margin-bottom: 32px;
+  text-align: left;
+
+  .dashboard-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-family: var(--font-family);
+  }
+
+  .dashboard-lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 700px;
+    line-height: 1.5;
+  }
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+// Left Inputs Panel
+.inputs-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+
+      .header-icon {
+        color: var(--accent-color);
+      }
+    }
+
+    .sample-btn {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 9999px;
+      padding: 0 12px;
+      height: 30px;
+      line-height: 28px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: var(--accent-color);
+      }
+    }
+  }
+}
+
+.inputs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .section-subtitle {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .fields-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0px; // Standard spacing between vertical items
+  }
+}
+
+// Custom styling for mat-form-fields in dark mode
+::ng-deep {
+  .mat-mdc-text-field-wrapper {
+    background-color: var(--input-bg) !important;
+  }
+  
+  .mat-mdc-form-field-focus-indicator {
+    color: var(--accent-color);
+  }
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+
+  .submit-btn {
+    flex-grow: 1;
+    font-weight: 600;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent-color) 0%, #4f46e5 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 14px 0 var(--accent-glow) !important;
+    transition: all 0.2s ease;
+
+    &:hover:not([disabled]) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px 0 var(--accent-glow) !important;
+    }
+  }
+
+  .reset-btn {
+    height: 48px;
+    border-radius: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: 1px solid var(--card-border);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+  }
+}
+
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  color: #fda4af;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 8px;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--metric-negative);
+  }
+}
+
+// Right Results Grid
+.results-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+// Responsive layout rules
+@media (max-width: 1024px) {
+  .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inputs-panel {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-wrapper {
+    padding: 24px 12px;
+  }
+
+  .overview-banner {
+    .dashboard-title {
+      font-size: 1.75rem;
+    }
+  }
+
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,80 @@
+.main-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 70px);
+}
+
+.workspace-tabs {
+  margin-top: 10px;
+
+  ::ng-deep {
+    // Style the tabs header container
+    .mat-mdc-tab-header {
+      background: transparent;
+      border-bottom: 1px solid var(--header-border) !important;
+      max-width: 600px;
+      margin: 0 auto;
+      border-radius: 9999px;
+      padding: 4px;
+      background: var(--header-bg);
+      border: 1px solid var(--header-border);
+      backdrop-filter: blur(8px);
+      margin-top: 24px;
+    }
+
+    // Individual tab styling
+    .mat-mdc-tab {
+      height: 48px;
+      border-radius: 9999px;
+      font-family: var(--font-family);
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      min-width: 180px;
+
+      &:hover {
+        color: var(--text-primary);
+      }
+
+      &.mdc-tab--active {
+        background: rgba(99, 102, 241, 0.1) !important;
+        color: var(--accent-color) !important;
+      }
+    }
+
+    // Hide default ink bar since we use pill styles
+    .mat-mdc-tab-ink-bar {
+      display: none !important;
+    }
+
+    // Outer body container
+    .mat-mdc-tab-body-wrapper {
+      padding-top: 10px;
+    }
+  }
+}
+
+.tab-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@media (max-width: 600px) {
+  .workspace-tabs {
+    ::ng-deep {
+      .mat-mdc-tab-header {
+        max-width: calc(100% - 24px);
+        margin-top: 16px;
+      }
+      .mat-mdc-tab {
+        min-width: auto;
+        flex-grow: 1;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}

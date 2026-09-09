@@ -1,0 +1,147 @@
+@use 'styles/theme' as custom-theme;
+@use '@angular/material' as mat;
+
+// Default theme configuration
+html {
+  @include mat.all-component-themes(custom-theme.$theme-dark);
+  color-scheme: dark;
+}
+
+// Light theme configuration
+html.light-mode {
+  @include mat.all-component-themes(custom-theme.$theme-light);
+  color-scheme: light;
+}
+
+// Global resets and base layout
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-family);
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+// Custom modern scrollbar design
+body, .custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-secondary) transparent;
+}
+
+@supports not (scrollbar-color: auto) {
+  body::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  body::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  body::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--text-secondary);
+    border-radius: 4px;
+  }
+}
+
+// Premium visual design utilities (Glassmorphism & Glows)
+.glass-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--card-glow), transparent);
+    z-index: 1;
+  }
+
+  &:hover {
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 15px 0 var(--card-glow);
+  }
+}
+
+// Glowing badge effect
+.glow-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 9999px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+
+  &.positive {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+  }
+
+  &.negative {
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #fb7185;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.15);
+  }
+
+  &.warning {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.15);
+  }
+}
+
+// Custom animations
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+.float-effect {
+  animation: float 4s ease-in-out infinite;
+}
+
+// Form adjustments to look unified in Material 3
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-card {
+  --mdc-outlined-card-container-color: var(--card-bg);
+  --mdc-outlined-card-outline-color: var(--card-border);
+}
