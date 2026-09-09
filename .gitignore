@@ -1,0 +1,8 @@
+# Monorepo-level IDE/build state
+# (created when the repo root itself, rather than a subproject, is opened
+# as an IntelliJ project or used as the Gradle working directory)
+/.idea/
+/.gradle/
+
+# OS
+.DS_Store
