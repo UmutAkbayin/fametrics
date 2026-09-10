@@ -6,14 +6,15 @@ import (
 	"path"
 )
 
-const baseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"
+// BaseURL is the SEC page listing the financial statement data set zip files.
+const BaseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"
 
-// UpdateLatestStatements finds the newest SEC financial statement zip and
-// downloads it into resourcesDir if it isn't already present there. It
-// returns the path to the file.
-func UpdateLatestStatements(resourcesDir string) (string, error) {
+// UpdateLatestStatements finds the newest SEC financial statement zip listed
+// on pageURL and downloads it into resourcesDir if it isn't already present
+// there. It returns the path to the file.
+func UpdateLatestStatements(pageURL, resourcesDir string) (string, error) {
 	slog.Info("scanning SEC website for latest file")
-	latestURL, err := FindLatestZipURL(baseURL)
+	latestURL, err := FindLatestZipURL(pageURL)
 	if err != nil {
 		return "", err
 	}
