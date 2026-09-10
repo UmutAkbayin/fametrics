@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -12,6 +13,9 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	log.Println("screener listening on :8081")
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	slog.Info("screener listening on :8081")
+	if err := http.ListenAndServe(":8081", nil); err != nil {
+		slog.Error("server failed", "error", err)
+		os.Exit(1)
+	}
 }
