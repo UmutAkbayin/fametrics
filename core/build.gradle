@@ -6,7 +6,7 @@ plugins {
 
 group = 'dev.akbayin'
 version = '0.0.1-SNAPSHOT'
-description = 'fa-metrics'
+description = 'fametrics'
 
 java {
     toolchain {
