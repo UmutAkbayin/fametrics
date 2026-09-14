@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -8,85 +9,111 @@ import (
 	"testing"
 )
 
-func TestUpdateLatestStatements_DownloadsWhenMissing(t *testing.T) {
+func TestUpdateLatestStatements_DownloadsMissingAndSkipsExisting(t *testing.T) {
 	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
 
-	const zipContent = "fake zip content"
-	var downloadCount int
+	downloadCount := map[string]int{}
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/files/2026q2.zip" {
-			downloadCount++
-			w.Write([]byte(zipContent))
-			return
+		switch r.URL.Path {
+		case "/files/2026q2.zip", "/files/2025q4.zip", "/files/2025q3.zip":
+			downloadCount[r.URL.Path]++
+			fmt.Fprintf(w, "content for %s", r.URL.Path)
+		default:
+			w.Write([]byte(`
+				<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>
+				<a href="` + server.URL + `/files/2025q4.zip">2025 Q4</a>
+				<a href="` + server.URL + `/files/2025q3.zip">2025 Q3</a>
+			`))
 		}
-		w.Write([]byte(`<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>`))
 	}))
 	defer server.Close()
 
 	dir := t.TempDir()
-	outFile, err := UpdateLatestStatements(server.URL, dir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	wantPath := filepath.Join(dir, "2026q2.zip")
-	if outFile != wantPath {
-		t.Errorf("got path %q, want %q", outFile, wantPath)
-	}
-	if downloadCount != 1 {
-		t.Errorf("expected exactly 1 download, got %d", downloadCount)
-	}
-
-	got, err := os.ReadFile(outFile)
-	if err != nil {
-		t.Fatalf("failed to read downloaded file: %v", err)
-	}
-	if string(got) != zipContent {
-		t.Errorf("got content %q, want %q", got, zipContent)
-	}
-}
-
-func TestUpdateLatestStatements_SkipsWhenAlreadyPresent(t *testing.T) {
-	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
-
-	var downloadCount int
-	var server *httptest.Server
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/files/2026q2.zip" {
-			downloadCount++
-			w.Write([]byte("should not be fetched"))
-			return
-		}
-		w.Write([]byte(`<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>`))
-	}))
-	defer server.Close()
-
-	dir := t.TempDir()
-	existingPath := filepath.Join(dir, "2026q2.zip")
 	const existingContent = "already downloaded"
+	existingPath := filepath.Join(dir, "2025q4.zip")
 	if err := os.WriteFile(existingPath, []byte(existingContent), 0o644); err != nil {
 		t.Fatalf("failed to seed existing file: %v", err)
 	}
 
-	outFile, err := UpdateLatestStatements(server.URL, dir)
-	if err != nil {
+	if err := UpdateLatestStatements(server.URL, dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if outFile != existingPath {
-		t.Errorf("got path %q, want %q", outFile, existingPath)
+	if downloadCount["/files/2025q4.zip"] != 0 {
+		t.Errorf("expected the already-present file not to be re-downloaded, got %d fetches", downloadCount["/files/2025q4.zip"])
 	}
-	if downloadCount != 0 {
-		t.Errorf("expected no download when file already exists, got %d", downloadCount)
+	if got, err := os.ReadFile(existingPath); err != nil || string(got) != existingContent {
+		t.Errorf("existing file was overwritten: got %q, err %v", got, err)
 	}
 
-	got, err := os.ReadFile(existingPath)
-	if err != nil {
-		t.Fatalf("failed to read file: %v", err)
+	for _, name := range []string{"2026q2.zip", "2025q3.zip"} {
+		if downloadCount["/files/"+name] != 1 {
+			t.Errorf("expected exactly 1 download for %s, got %d", name, downloadCount["/files/"+name])
+		}
+		got, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", name, err)
+		}
+		want := "content for /files/" + name
+		if string(got) != want {
+			t.Errorf("got content %q, want %q", got, want)
+		}
 	}
-	if string(got) != existingContent {
-		t.Errorf("existing file was overwritten: got %q, want %q", got, existingContent)
+}
+
+func TestUpdateLatestStatements_CreatesMissingResourcesDirectory(t *testing.T) {
+	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/files/2026q2.zip" {
+			w.Write([]byte("zip content"))
+			return
+		}
+		w.Write([]byte(`<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>`))
+	}))
+	defer server.Close()
+
+	dir := filepath.Join(t.TempDir(), "nested", "resources")
+	if err := UpdateLatestStatements(server.URL, dir); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "2026q2.zip")); err != nil {
+		t.Errorf("expected file to exist in newly created directory: %v", err)
+	}
+}
+
+func TestUpdateLatestStatements_ContinuesAfterOneDownloadFails(t *testing.T) {
+	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/files/2026q2.zip":
+			w.WriteHeader(http.StatusInternalServerError)
+		case "/files/2025q4.zip":
+			w.Write([]byte("zip content"))
+		default:
+			w.Write([]byte(`
+				<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>
+				<a href="` + server.URL + `/files/2025q4.zip">2025 Q4</a>
+			`))
+		}
+	}))
+	defer server.Close()
+
+	dir := t.TempDir()
+	if err := UpdateLatestStatements(server.URL, dir); err != nil {
+		t.Fatalf("expected a single failed download not to fail the whole update: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "2025q4.zip")); err != nil {
+		t.Errorf("expected the succeeding download to be saved: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "2026q2.zip")); err == nil {
+		t.Error("expected the failing download not to leave a file behind")
 	}
 }
 
@@ -98,7 +125,7 @@ func TestUpdateLatestStatements_PropagatesFindError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := UpdateLatestStatements(server.URL, t.TempDir()); err == nil {
+	if err := UpdateLatestStatements(server.URL, t.TempDir()); err == nil {
 		t.Fatal("expected an error when the page can't be fetched")
 	}
 }

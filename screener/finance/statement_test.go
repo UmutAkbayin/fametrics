@@ -5,10 +5,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
-func TestFindLatestZipURL_PicksNewestByYearAndQuarter(t *testing.T) {
+func TestFindLatestZipURLs_OrdersNewestFirst(t *testing.T) {
 	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
 
 	var gotUA string
@@ -23,21 +24,44 @@ func TestFindLatestZipURL_PicksNewestByYearAndQuarter(t *testing.T) {
 	}))
 	defer server.Close()
 
-	got, err := FindLatestZipURL(server.URL)
+	got, err := FindLatestZipURLs(server.URL, 3)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := server.URL + "/files/2026q2.zip"
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
+	want := []string{
+		server.URL + "/files/2026q2.zip",
+		server.URL + "/files/2025q4.zip",
+		server.URL + "/files/2023q1.zip",
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 	if gotUA == "" {
 		t.Error("expected a non-empty User-Agent header to be sent")
 	}
 }
 
-func TestFindLatestZipURL_NoMatches(t *testing.T) {
+func TestFindLatestZipURLs_FewerMatchesThanRequested(t *testing.T) {
+	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<a href="/files/2025q4.zip">2025 Q4</a>`))
+	}))
+	defer server.Close()
+
+	got, err := FindLatestZipURLs(server.URL, 4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := []string{"https://www.sec.gov/files/2025q4.zip"}
+	if !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestFindLatestZipURLs_NoMatches(t *testing.T) {
 	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,12 +69,12 @@ func TestFindLatestZipURL_NoMatches(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := FindLatestZipURL(server.URL); err == nil {
+	if _, err := FindLatestZipURLs(server.URL, 4); err == nil {
 		t.Fatal("expected an error when no zip links are found")
 	}
 }
 
-func TestFindLatestZipURL_HTTPError(t *testing.T) {
+func TestFindLatestZipURLs_HTTPError(t *testing.T) {
 	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -58,15 +82,15 @@ func TestFindLatestZipURL_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if _, err := FindLatestZipURL(server.URL); err == nil {
+	if _, err := FindLatestZipURLs(server.URL, 4); err == nil {
 		t.Fatal("expected an error on non-200 response")
 	}
 }
 
-func TestFindLatestZipURL_MissingUserAgentEnv(t *testing.T) {
+func TestFindLatestZipURLs_MissingUserAgentEnv(t *testing.T) {
 	t.Setenv("SEC_USER_AGENT_EMAIL", "")
 
-	if _, err := FindLatestZipURL("http://example.com"); err == nil {
+	if _, err := FindLatestZipURLs("http://example.com", 4); err == nil {
 		t.Fatal("expected an error when SEC_USER_AGENT_EMAIL is unset")
 	}
 }
