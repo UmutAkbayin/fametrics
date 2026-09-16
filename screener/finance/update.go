@@ -40,7 +40,8 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 		submissions = append(submissions, subs...)
 	}
 
-	slog.Info("collected 10-K submissions", "count", len(submissions))
+	latest := latestTenKByCIK(submissions)
+	slog.Info("collected 10-K submissions", "count", len(submissions), "companies", len(latest))
 
 	return nil
 }
