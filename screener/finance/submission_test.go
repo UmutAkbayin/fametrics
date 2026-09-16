@@ -85,6 +85,47 @@ func TestReadTenKSubmissions_FindsSubTxtRegardlessOfPath(t *testing.T) {
 	}
 }
 
+func TestLatestTenKByCIK_KeepsMostRecentFiledPerCIK(t *testing.T) {
+	submissions := []Submission{
+		{ADSH: "0001", CIK: "1", Filed: "20240301"},
+		{ADSH: "0002", CIK: "1", Filed: "20250301"}, // later filing for the same company
+		{ADSH: "0003", CIK: "1", Filed: "20230301"},
+	}
+
+	got := latestTenKByCIK(submissions)
+
+	if len(got) != 1 {
+		t.Fatalf("expected 1 company, got %d", len(got))
+	}
+	if got["1"].ADSH != "0002" {
+		t.Errorf("expected the most recently filed submission (0002), got %+v", got["1"])
+	}
+}
+
+func TestLatestTenKByCIK_KeepsOneEntryPerDistinctCIK(t *testing.T) {
+	submissions := []Submission{
+		{ADSH: "0001", CIK: "1", Filed: "20250301"},
+		{ADSH: "0002", CIK: "2", Filed: "20250301"},
+	}
+
+	got := latestTenKByCIK(submissions)
+
+	if len(got) != 2 {
+		t.Fatalf("expected 2 companies, got %d", len(got))
+	}
+	if got["1"].ADSH != "0001" || got["2"].ADSH != "0002" {
+		t.Errorf("expected each CIK to keep its own submission, got %+v", got)
+	}
+}
+
+func TestLatestTenKByCIK_EmptyInput(t *testing.T) {
+	got := latestTenKByCIK(nil)
+
+	if len(got) != 0 {
+		t.Errorf("expected an empty map, got %+v", got)
+	}
+}
+
 // writeTestZip creates a zip file at zipPath containing the given files.
 func writeTestZip(t *testing.T, zipPath string, files map[string]string) {
 	t.Helper()
