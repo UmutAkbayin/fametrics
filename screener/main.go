@@ -20,7 +20,7 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	err := finance.UpdateLatestStatements(finance.BaseURL, "resources")
+	err := finance.CalculateTopCompanies("resources", finance.TopCompaniesCount)
 	if err != nil {
 		panic(err)
 	}

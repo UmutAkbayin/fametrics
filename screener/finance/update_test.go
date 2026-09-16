@@ -36,7 +36,7 @@ func TestUpdateLatestStatements_DownloadsMissingAndSkipsExisting(t *testing.T) {
 		t.Fatalf("failed to seed existing file: %v", err)
 	}
 
-	if err := UpdateLatestStatements(server.URL, dir); err != nil {
+	if err := updateLatestStatements(server.URL, dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -76,7 +76,7 @@ func TestUpdateLatestStatements_CreatesMissingResourcesDirectory(t *testing.T) {
 	defer server.Close()
 
 	dir := filepath.Join(t.TempDir(), "nested", "resources")
-	if err := UpdateLatestStatements(server.URL, dir); err != nil {
+	if err := updateLatestStatements(server.URL, dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -105,7 +105,7 @@ func TestUpdateLatestStatements_ContinuesAfterOneDownloadFails(t *testing.T) {
 	defer server.Close()
 
 	dir := t.TempDir()
-	if err := UpdateLatestStatements(server.URL, dir); err != nil {
+	if err := updateLatestStatements(server.URL, dir); err != nil {
 		t.Fatalf("expected a single failed download not to fail the whole update: %v", err)
 	}
 
@@ -125,7 +125,7 @@ func TestUpdateLatestStatements_PropagatesFindError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if err := UpdateLatestStatements(server.URL, t.TempDir()); err == nil {
+	if err := updateLatestStatements(server.URL, t.TempDir()); err == nil {
 		t.Fatal("expected an error when the page can't be fetched")
 	}
 }

@@ -7,18 +7,48 @@ import (
 	"path/filepath"
 )
 
+// topCompaniesCount specifies how many companies should be saved to the database
+// based on a ranking algorithm
+const TopCompaniesCount = 200
+
 // BaseURL is the SEC page listing the financial statement data set zip files.
-const BaseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"
+const baseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-statement-data-sets"
 
 // latestQuarterCount is how many of the newest quarterly zips to keep in sync.
 // Companies don't all file their 10-K in the same quarter, so a single
 // quarter's data set misses filings that a few quarters together cover.
 const latestQuarterCount = 4
 
-// UpdateLatestStatements finds the newest latestQuarterCount SEC financial
+func CalculateTopCompanies(resourcesDir string, n int) error {
+	err := updateLatestStatements(baseURL, resourcesDir)
+	if err != nil {
+		return err
+	}
+
+	zipPaths, err := filepath.Glob(filepath.Join(resourcesDir, "*.zip"))
+	if err != nil {
+		return err
+	}
+
+	var submissions []Submission
+	for _, filename := range zipPaths {
+		subs, err := readTenKSubmissions(filename)
+		if err != nil {
+			slog.Error("failed to read submissions", "filename", filename, "error", err)
+			continue
+		}
+		submissions = append(submissions, subs...)
+	}
+
+	slog.Info("collected 10-K submissions", "count", len(submissions))
+
+	return nil
+}
+
+// updateLatestStatements finds the newest latestQuarterCount SEC financial
 // statement zips listed on pageURL and downloads any that are missing from
 // resourcesDir.
-func UpdateLatestStatements(pageURL, resourcesDir string) error {
+func updateLatestStatements(pageURL, resourcesDir string) error {
 	slog.Info("scanning SEC website for latest files", "count", latestQuarterCount)
 	zipURLs, err := FindLatestZipURLs(pageURL, latestQuarterCount)
 	if err != nil {
