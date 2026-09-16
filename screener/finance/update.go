@@ -49,6 +49,12 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 	}
 	slog.Info("extracted fundamentals", "companies", len(fundamentals))
 
+	metrics := make(map[string]Metrics, len(fundamentals))
+	for adsh, f := range fundamentals {
+		metrics[adsh] = ComputeMetrics(f)
+	}
+	slog.Info("computed derived metrics", "companies", len(metrics))
+
 	return nil
 }
 
