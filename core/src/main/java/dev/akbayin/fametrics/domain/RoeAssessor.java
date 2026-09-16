@@ -74,7 +74,13 @@ public class RoeAssessor implements MetricAssessor {
             return Optional.empty();
         }
 
-        BigDecimal result = netIncome.divide(totalEquity, 2, RoundingMode.HALF_UP);
+        // evaluate()'s thresholds (15, 20) are percentage-scale, so the raw
+        // fraction from the division must be scaled up to match — dividing
+        // to 4 places first keeps enough precision that the *100 doesn't
+        // lose a digit before the final rounding.
+        BigDecimal result = netIncome.divide(totalEquity, 4, RoundingMode.HALF_UP)
+            .multiply(new BigDecimal("100"))
+            .setScale(2, RoundingMode.HALF_UP);
 
         return Optional.of(result);
     }

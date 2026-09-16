@@ -5,12 +5,47 @@ import dev.akbayin.fametrics.dto.SummaryRequest;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RoeAssessorTest {
 
     private final RoeAssessor assessor = new RoeAssessor();
+
+    @Test
+    void calculate_shouldReturnResultOnThePercentageScaleEvaluateExpects() {
+        var capitalStructure = new CapitalStructure(null, new BigDecimal("500.00"), new BigDecimal("100.00"));
+        var request = new SummaryRequest(null, null, capitalStructure);
+
+        var result = assessor.calculate(request);
+
+        // netIncome 100 / totalEquity 500 = 0.20 -> scaled to 20.00, not 0.20,
+        // so it lands correctly against the 15/20 evaluate() thresholds below.
+        assertThat(result).isEqualTo(Optional.of(new BigDecimal("20.00")));
+    }
+
+    @Test
+    void calculate_thenEvaluate_shouldClassifyConsistently() {
+        var capitalStructure = new CapitalStructure(null, new BigDecimal("1000.00"), new BigDecimal("100.00"));
+        var request = new SummaryRequest(null, null, capitalStructure);
+
+        var roe = assessor.calculate(request).orElseThrow();
+        var evaluation = assessor.evaluate(request, roe);
+
+        // netIncome 100 / totalEquity 1000 = 10%, below the 15 threshold.
+        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.FAVORABLE);
+    }
+
+    @Test
+    void calculate_whenTotalEquityIsNegative_shouldReturnEmpty() {
+        var capitalStructure = new CapitalStructure(null, new BigDecimal("-500.00"), new BigDecimal("-100.00"));
+        var request = new SummaryRequest(null, null, capitalStructure);
+
+        var result = assessor.calculate(request);
+
+        assertThat(result).isEmpty();
+    }
 
     @Test
     void evaluate_whenRoeIsBelowFifteen_shouldReturnFavorable() {
