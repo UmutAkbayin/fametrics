@@ -43,6 +43,12 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 	latest := latestTenKByCIK(submissions)
 	slog.Info("collected 10-K submissions", "count", len(submissions), "companies", len(latest))
 
+	fundamentals, err := ExtractFundamentals(resourcesDir, latest)
+	if err != nil {
+		return err
+	}
+	slog.Info("extracted fundamentals", "companies", len(fundamentals))
+
 	return nil
 }
 
