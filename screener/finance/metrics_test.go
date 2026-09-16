@@ -85,6 +85,35 @@ func TestComputeMetrics_NilWhenDenominatorZero(t *testing.T) {
 	}
 }
 
+// TestComputeMetrics_NilWhenDenominatorNegative guards against the bug
+// flagged when comparing against core's RoeAssessor: a net loss divided by
+// negative equity comes out positive, which would misrepresent a distressed,
+// negative-equity company as having a strong ROE. EPS/BVPS/ROE/NetMargin
+// must all refuse a negative denominator, not just a zero one.
+func TestComputeMetrics_NilWhenDenominatorNegative(t *testing.T) {
+	f := Fundamentals{
+		NetIncomeLoss:      ptr(-50),  // a loss
+		StockholdersEquity: ptr(-100), // negative equity
+		Revenue:            ptr(-10),  // pathological, but exercise the same guard
+		SharesOutstanding:  ptr(-5),
+	}
+
+	m := ComputeMetrics(f)
+
+	if m.EPS != nil {
+		t.Errorf("expected nil EPS for a negative share count, got %v", *m.EPS)
+	}
+	if m.BVPS != nil {
+		t.Errorf("expected nil BVPS for a negative share count, got %v", *m.BVPS)
+	}
+	if m.ROE != nil {
+		t.Errorf("expected nil ROE for negative equity, not a misleadingly positive value, got %v", *m.ROE)
+	}
+	if m.NetMargin != nil {
+		t.Errorf("expected nil NetMargin for negative revenue, got %v", *m.NetMargin)
+	}
+}
+
 func TestComputeMetrics_EPSGrowthRateNilWhenPriorMissing(t *testing.T) {
 	f := Fundamentals{
 		NetIncomeLoss:     ptr(120),

@@ -21,27 +21,49 @@ type Metrics struct {
 // they're computed once here instead of being recomputed at each later use.
 func ComputeMetrics(f Fundamentals) Metrics {
 	var m Metrics
-	m.EPS = ratio(f.NetIncomeLoss, f.SharesOutstanding)
-	m.BVPS = ratio(f.StockholdersEquity, f.SharesOutstanding)
-	m.ROE = ratio(f.NetIncomeLoss, f.StockholdersEquity)
-	m.NetMargin = ratio(f.NetIncomeLoss, f.Revenue)
+	m.EPS = positiveRatio(f.NetIncomeLoss, f.SharesOutstanding)
+	m.BVPS = positiveRatio(f.StockholdersEquity, f.SharesOutstanding)
+	m.ROE = positiveRatio(f.NetIncomeLoss, f.StockholdersEquity)
+	m.NetMargin = positiveRatio(f.NetIncomeLoss, f.Revenue)
 
 	// eps_growth_rate uses the current year's share count for both years'
-	// EPS, per the plan: only the net income numerator changes.
-	epsPrior := ratio(f.NetIncomeLossPrior, f.SharesOutstanding)
+	// EPS, per the plan: only the net income numerator changes. The share
+	// count denominator here still must be positive; a negative eps_prior
+	// (a loss year) is fine and expected, it's the numerator of this step,
+	// not the denominator.
+	epsPrior := positiveRatio(f.NetIncomeLossPrior, f.SharesOutstanding)
+	// eps_prior becomes the denominator below, and it's allowed to be
+	// negative (see TestComputeMetrics_GrowthFromNegativePriorEPSIsNotMeaningful),
+	// so this uses plain ratio, not positiveRatio.
 	m.EPSGrowthRate = ratio(subtract(m.EPS, epsPrior), epsPrior)
 
 	return m
 }
 
 // ratio safely divides two optional values: nil if either input is missing
-// or the denominator is zero.
+// or the denominator is zero. The denominator may be negative — used where
+// a negative base is mathematically valid (see eps_growth_rate above).
 func ratio(numerator, denominator *float64) *float64 {
 	if numerator == nil || denominator == nil || *denominator == 0 {
 		return nil
 	}
 	result := *numerator / *denominator
 	return &result
+}
+
+// positiveRatio is ratio, but also rejects a negative (not just zero)
+// denominator. Used for per-share and equity-based ratios (EPS, BVPS, ROE,
+// NetMargin), where a negative denominator — negative equity, negative
+// shares outstanding — would flip the sign of the result and produce a
+// misleadingly "good-looking" number for what is actually a distressed
+// company: a net loss divided by negative equity comes out positive. This
+// mirrors core's (Java) RoeAssessor/DeRatioAssessor convention of requiring
+// totalEquity.signum() > 0 before dividing by it.
+func positiveRatio(numerator, denominator *float64) *float64 {
+	if denominator == nil || *denominator <= 0 {
+		return nil
+	}
+	return ratio(numerator, denominator)
 }
 
 // subtract safely subtracts two optional values: nil if either is missing.
