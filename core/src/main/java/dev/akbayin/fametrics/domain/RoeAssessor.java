@@ -12,8 +12,10 @@ import java.util.Optional;
 public class RoeAssessor implements MetricAssessor {
 
     // Rough rule-of-thumb range, not sector- or rate-adjusted; arbitrary placeholder, not a researched value.
-    private static final BigDecimal UNDERVALUED_THRESHOLD = new BigDecimal("15");
-    private static final BigDecimal OVERVALUED_THRESHOLD = new BigDecimal("20");
+    // Named LOW/HIGH rather than UNDERVALUED/OVERVALUED: ROE is a profitability ratio, not a valuation
+    // multiple, so it says nothing about whether the stock's price is cheap or expensive.
+    private static final BigDecimal LOW_ROE_THRESHOLD = new BigDecimal("15");
+    private static final BigDecimal HIGH_ROE_THRESHOLD = new BigDecimal("20");
 
     @Override
     public Metric metric() {
@@ -32,19 +34,22 @@ public class RoeAssessor implements MetricAssessor {
         Objects.requireNonNull(roe, "ROE must not be null");
 
         var benchmark = new Benchmark(
-            UNDERVALUED_THRESHOLD,
-            OVERVALUED_THRESHOLD,
+            LOW_ROE_THRESHOLD,
+            HIGH_ROE_THRESHOLD,
             "A ROE roughly between 15 and 20 is treated here as a broadly \"fair\" range. This ignores "
                 + "sector, growth rate, and interest-rate context, so treat it as a rough signal, not a verdict."
         );
 
+        // Unlike a valuation multiple (P/E, P/B, D/E), where low is favorable, ROE is a profitability
+        // ratio: a higher ROE means the company generates more profit per dollar of shareholder equity,
+        // which is a quality signal, not a red flag.
         Assessment assessment;
-        if (roe.compareTo(UNDERVALUED_THRESHOLD) < 0) {
-            assessment = new Assessment(Rating.FAVORABLE, "Low ROE");
-        } else if (roe.compareTo(OVERVALUED_THRESHOLD) <= 0) {
+        if (roe.compareTo(LOW_ROE_THRESHOLD) < 0) {
+            assessment = new Assessment(Rating.UNFAVORABLE, "Low ROE");
+        } else if (roe.compareTo(HIGH_ROE_THRESHOLD) <= 0) {
             assessment = new Assessment(Rating.NEUTRAL, "Fair ROE");
         } else {
-            assessment = new Assessment(Rating.UNFAVORABLE, "High ROE");
+            assessment = new Assessment(Rating.FAVORABLE, "High ROE");
         }
 
         return new MetricEvaluation(assessment, benchmark);

@@ -33,8 +33,8 @@ class RoeAssessorTest {
         var roe = assessor.calculate(request).orElseThrow();
         var evaluation = assessor.evaluate(request, roe);
 
-        // netIncome 100 / totalEquity 1000 = 10%, below the 15 threshold.
-        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.FAVORABLE);
+        // netIncome 100 / totalEquity 1000 = 10%, below the 15 threshold, so unfavorable.
+        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.UNFAVORABLE);
     }
 
     @Test
@@ -48,13 +48,13 @@ class RoeAssessorTest {
     }
 
     @Test
-    void evaluate_whenRoeIsBelowFifteen_shouldReturnFavorable() {
+    void evaluate_whenRoeIsBelowFifteen_shouldReturnUnfavorable() {
         var capitalStructure = new CapitalStructure(null, new BigDecimal("100.00"), new BigDecimal("10.00"));
         var request = new SummaryRequest(null, null, capitalStructure);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("10.00"));
 
-        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.FAVORABLE);
+        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.UNFAVORABLE);
     }
 
     @Test
@@ -68,17 +68,17 @@ class RoeAssessorTest {
     }
 
     @Test
-    void evaluate_whenRoeIsAboveTwenty_shouldReturnUnfavorable() {
+    void evaluate_whenRoeIsAboveTwenty_shouldReturnFavorable() {
         var capitalStructure = new CapitalStructure(null, new BigDecimal("100.00"), new BigDecimal("25.00"));
         var request = new SummaryRequest(null, null, capitalStructure);
 
         var evaluation = assessor.evaluate(request, new BigDecimal("25.00"));
 
-        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.UNFAVORABLE);
+        assertThat(evaluation.assessment().rating()).isEqualTo(Rating.FAVORABLE);
     }
 
     @Test
-    void evaluate_shouldUseUndervaluedAndOvervaluedThresholdsAsBenchmarkBounds() {
+    void evaluate_shouldUseLowAndHighRoeThresholdsAsBenchmarkBounds() {
         var capitalStructure = new CapitalStructure(null, new BigDecimal("100.00"), new BigDecimal("18.00"));
         var request = new SummaryRequest(null, null, capitalStructure);
 
