@@ -55,6 +55,18 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 	}
 	slog.Info("computed derived metrics", "companies", len(metrics))
 
+	candidates := BuildCandidates(latest, fundamentals, metrics)
+	ApplyHardFilters(candidates)
+	ComputeQualityScores(candidates)
+
+	passing := 0
+	for _, c := range candidates {
+		if c.PassesHardFilter {
+			passing++
+		}
+	}
+	slog.Info("applied hard filters", "companies", len(candidates), "passing", passing)
+
 	return nil
 }
 
