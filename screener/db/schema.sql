@@ -23,8 +23,8 @@ create table companies
     capex_prior               NUMERIC(28, 4),
     net_income_prior          NUMERIC(28, 4),
 
-    eps                       NUMERIC(14, 4),
-    bvps                      NUMERIC(14, 4),
+    eps                       NUMERIC(20, 4),
+    bvps                      NUMERIC(20, 4),
     eps_growth_rate           NUMERIC(10, 4),
     quality_score             NUMERIC(6, 2),
 
