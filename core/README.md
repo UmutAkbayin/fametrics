@@ -191,4 +191,4 @@ src/main/java/dev/akbayin/fametrics/
 
 ## License
 
-No license has been specified for this project yet.
+MIT — see the [repository root `LICENSE`](../LICENSE).
