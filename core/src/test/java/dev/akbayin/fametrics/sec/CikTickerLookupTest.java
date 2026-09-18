@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,5 +74,33 @@ class CikTickerLookupTest {
         lookup.refresh(); // second refresh fails — must not throw, must not wipe the cache
 
         assertThat(lookup.findTicker(320193L)).contains("AAPL");
+    }
+
+    @Test
+    void refreshIfDue_whenNeverSucceeded_keepsRetrying() {
+        when(client.fetchTickerEntries()).thenThrow(new RuntimeException("SEC rate limit"));
+
+        lookup.refreshIfDue();
+        lookup.refreshIfDue();
+        lookup.refreshIfDue();
+
+        // The real bug this pins: before this fix, a failed refresh
+        // wouldn't be retried again for a full 24h regardless of outcome.
+        // Every due-check must actually retry until one succeeds.
+        verify(client, times(3)).fetchTickerEntries();
+    }
+
+    @Test
+    void refreshIfDue_afterASuccessfulRefresh_doesNotRefetchImmediately() {
+        when(client.fetchTickerEntries()).thenReturn(Map.of(
+            "0", new SecTickerEntry(320193L, "AAPL", "Apple Inc.")
+        ));
+
+        lookup.refreshIfDue(); // succeeds
+        lookup.refreshIfDue(); // called again almost immediately after
+
+        // REFRESH_INTERVAL (24h) hasn't elapsed since the successful
+        // refresh, so this second call must not hit the client again.
+        verify(client, times(1)).fetchTickerEntries();
     }
 }
