@@ -74,4 +74,27 @@ describe('MetricDashboardComponent', () => {
       expect(component.getMetricResult('ROE')).toBeNull();
     });
   });
+
+  describe('prefillFromCandidate', () => {
+    it('prefills sharePrice and calculates eps and bvps from candidate metrics', () => {
+      component.prefillFromCandidate({
+        cik: 12345,
+        name: 'Test Corp',
+        ticker: 'TEST',
+        periodEnd: '2024-12-31',
+        price: 100,
+        qualityScore: 90,
+        valueScore: { composite: 80 },
+        finalScore: 85,
+        metrics: [
+          { metric: 'PE_TTM', value: 20 },
+          { metric: 'PB_RATIO', value: 5 }
+        ]
+      });
+
+      expect(component.inputForm.get('sharePrice')?.value).toBe(100);
+      expect(component.inputForm.get('eps')?.value).toBe(5);
+      expect(component.inputForm.get('bvps')?.value).toBe(20);
+    });
+  });
 });
