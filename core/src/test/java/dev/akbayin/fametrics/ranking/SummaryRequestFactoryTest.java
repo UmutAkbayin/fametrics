@@ -44,7 +44,7 @@ class SummaryRequestFactoryTest {
     @Test
     void from_mapsEachFieldToTheCorrectDestination() {
         var candidate = candidateWithDistinctValues();
-        var price = new CachedPrice(new BigDecimal("100.25"), new BigDecimal("999999"), Instant.now());
+        var price = new CachedPrice("ACME", new BigDecimal("100.25"), new BigDecimal("999999"), Instant.now());
 
         var request = SummaryRequestFactory.from(candidate, price);
 
@@ -69,7 +69,7 @@ class SummaryRequestFactoryTest {
             null, null, null, null, null, null, null, null,
             false, OffsetDateTime.now()
         );
-        var price = new CachedPrice(new BigDecimal("10.00"), new BigDecimal("100"), Instant.now());
+        var price = new CachedPrice("NODATA", new BigDecimal("10.00"), new BigDecimal("100"), Instant.now());
 
         var request = SummaryRequestFactory.from(candidate, price);
 
