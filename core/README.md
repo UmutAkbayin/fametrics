@@ -44,7 +44,6 @@ explicit rounding, so results are deterministic and free of floating-point error
 | Language       | Java 25                              |
 | Framework      | Spring Boot 4 (Spring MVC)           |
 | HTTP clients   | Spring `RestClient` (screener, FMP, SEC), scheduled via `@Scheduled` |
-| Persistence    | Spring Data JPA / Hibernate, PostgreSQL |
 | Validation     | Jakarta Bean Validation               |
 | API docs       | springdoc-openapi (OpenAPI 3 / Swagger UI) |
 | Build          | Gradle                               |
@@ -55,9 +54,6 @@ explicit rounding, so results are deterministic and free of floating-point error
 ### Prerequisites
 
 - Java 25
-- A running PostgreSQL instance reachable at `localhost:5432` with database
-  `fa-metrics` and credentials `postgres` / `postgres` (see
-  `src/main/resources/application.properties` to change these)
 - `SEC_USER_AGENT_EMAIL` — SEC requires a real contact email in the
   User-Agent header on every request to `company_tickers.json`, or it
   rejects the request with `403`; same requirement the `screener` (Go)
