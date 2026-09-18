@@ -26,6 +26,67 @@ func (q *Queries) InsertIngestionRun(ctx context.Context, arg InsertIngestionRun
 	return err
 }
 
+const listCandidates = `-- name: ListCandidates :many
+SELECT cik, name, period_end, adsh,
+       assets, liabilities, stockholders_equity,
+       net_income, operating_income, operating_cash_flow, capex, revenue, cash, long_term_debt, shares_outstanding,
+       operating_cash_flow_prior, capex_prior, net_income_prior,
+       eps, bvps, eps_growth_rate, quality_score,
+       passes_hard_filter, updated_at
+FROM companies
+WHERE passes_hard_filter = true
+ORDER BY quality_score DESC NULLS LAST
+LIMIT $1
+`
+
+// NULLS LAST: a passer can still have a nil quality_score (e.g. net_margin
+// couldn't be computed even though ROE/FCF/D-E all passed), and Postgres's
+// default for DESC is NULLS FIRST, which would wrongly rank it top.
+func (q *Queries) ListCandidates(ctx context.Context, limit int32) ([]Company, error) {
+	rows, err := q.db.Query(ctx, listCandidates, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Company
+	for rows.Next() {
+		var i Company
+		if err := rows.Scan(
+			&i.Cik,
+			&i.Name,
+			&i.PeriodEnd,
+			&i.Adsh,
+			&i.Assets,
+			&i.Liabilities,
+			&i.StockholdersEquity,
+			&i.NetIncome,
+			&i.OperatingIncome,
+			&i.OperatingCashFlow,
+			&i.Capex,
+			&i.Revenue,
+			&i.Cash,
+			&i.LongTermDebt,
+			&i.SharesOutstanding,
+			&i.OperatingCashFlowPrior,
+			&i.CapexPrior,
+			&i.NetIncomePrior,
+			&i.Eps,
+			&i.Bvps,
+			&i.EpsGrowthRate,
+			&i.QualityScore,
+			&i.PassesHardFilter,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertCompany = `-- name: UpsertCompany :exec
 INSERT INTO companies (
     cik, name, period_end, adsh,

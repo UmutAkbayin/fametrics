@@ -42,3 +42,18 @@ ON CONFLICT (cik) DO UPDATE SET
 -- name: InsertIngestionRun :exec
 INSERT INTO ingestion_runs (quarter, company_count)
 VALUES ($1, $2);
+
+-- name: ListCandidates :many
+SELECT cik, name, period_end, adsh,
+       assets, liabilities, stockholders_equity,
+       net_income, operating_income, operating_cash_flow, capex, revenue, cash, long_term_debt, shares_outstanding,
+       operating_cash_flow_prior, capex_prior, net_income_prior,
+       eps, bvps, eps_growth_rate, quality_score,
+       passes_hard_filter, updated_at
+FROM companies
+WHERE passes_hard_filter = true
+-- NULLS LAST: a passer can still have a nil quality_score (e.g. net_margin
+-- couldn't be computed even though ROE/FCF/D-E all passed), and Postgres's
+-- default for DESC is NULLS FIRST, which would wrongly rank it top.
+ORDER BY quality_score DESC NULLS LAST
+LIMIT $1;

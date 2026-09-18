@@ -24,16 +24,18 @@ func main() {
 
 	ctx := context.Background()
 
-	candidates, quarter, err := finance.CalculateTopCompanies("resources")
-	if err != nil {
-		panic(err)
-	}
-
 	pool, err := db.Connect(ctx)
 	if err != nil {
 		panic(err)
 	}
 	defer pool.Close()
+
+	http.HandleFunc("GET /candidates", candidatesHandler(pool))
+
+	candidates, quarter, err := finance.CalculateTopCompanies("resources")
+	if err != nil {
+		panic(err)
+	}
 
 	if err := persistCandidates(ctx, pool, candidates, quarter); err != nil {
 		panic(err)
