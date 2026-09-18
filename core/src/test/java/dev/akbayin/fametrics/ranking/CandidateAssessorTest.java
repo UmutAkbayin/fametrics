@@ -42,7 +42,7 @@ class CandidateAssessorTest {
             new BigDecimal("10"), new BigDecimal("50"), new BigDecimal("0.20"), null,
             true, OffsetDateTime.now()
         );
-        var price = new CachedPrice(new BigDecimal("45.00"), new BigDecimal("100000"), Instant.now());
+        var price = new CachedPrice("ACME", new BigDecimal("45.00"), new BigDecimal("100000"), Instant.now());
 
         AssessedCandidate assessed = candidateAssessor.assess(candidate, price);
 
