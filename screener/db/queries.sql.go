@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getLatestIngestionQuarter = `-- name: GetLatestIngestionQuarter :one
+SELECT quarter FROM ingestion_runs ORDER BY id DESC LIMIT 1
+`
+
+func (q *Queries) GetLatestIngestionQuarter(ctx context.Context) (string, error) {
+	row := q.db.QueryRow(ctx, getLatestIngestionQuarter)
+	var quarter string
+	err := row.Scan(&quarter)
+	return quarter, err
+}
+
 const insertIngestionRun = `-- name: InsertIngestionRun :exec
 INSERT INTO ingestion_runs (quarter, company_count)
 VALUES ($1, $2)

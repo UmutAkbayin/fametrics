@@ -69,12 +69,18 @@ func readTenKSubmissions(zipPath string) ([]Submission, error) {
 		return nil, err
 	}
 
-	sourceZip := strings.TrimSuffix(filepath.Base(zipPath), filepath.Ext(zipPath))
+	sourceZip := quarterLabel(zipPath)
 	for i := range submissions {
 		submissions[i].SourceZip = sourceZip
 	}
 
 	return submissions, nil
+}
+
+// quarterLabel derives a quarterly data set's "YYYYqQ" label (e.g. "2026q2")
+// from its zip filename, rather than any content inside the zip.
+func quarterLabel(zipPath string) string {
+	return strings.TrimSuffix(filepath.Base(zipPath), filepath.Ext(zipPath))
 }
 
 // parseTenKSubmissions reads tab-delimited submission rows from r, keeping

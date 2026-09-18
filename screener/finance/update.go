@@ -19,23 +19,40 @@ const baseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-st
 // quarter's data set misses filings that a few quarters together cover.
 const latestQuarterCount = 4
 
-// CalculateTopCompanies runs the full SEC ingestion pipeline: download the
-// latest quarterly data sets, reduce them to one 10-K per company, extract
+// SyncLatestZips downloads the newest latestQuarterCount SEC financial
+// statement zips into resourcesDir — skipping any already present, per
+// updateLatestStatements — and returns their paths. Kept separate from
+// CalculateTopCompanies so a caller can check whether anything actually
+// changed (via LatestQuarterLabel) before paying for the much more
+// expensive submission/fundamentals/metrics pipeline.
+func SyncLatestZips(resourcesDir string) ([]string, error) {
+	if err := updateLatestStatements(baseURL, resourcesDir); err != nil {
+		return nil, err
+	}
+	return filepath.Glob(filepath.Join(resourcesDir, "*.zip"))
+}
+
+// LatestQuarterLabel returns the most recent "YYYYqQ" label among zipPaths.
+// Plain string comparison sorts these chronologically because the format is
+// fixed-width and zero-padded — same trick as the Filed-date comparison in
+// latestTenKByCIK.
+func LatestQuarterLabel(zipPaths []string) string {
+	var latest string
+	for _, p := range zipPaths {
+		if q := quarterLabel(p); q > latest {
+			latest = q
+		}
+	}
+	return latest
+}
+
+// CalculateTopCompanies runs the SEC ingestion pipeline over the already-
+// downloaded zips in zipPaths: reduce them to one 10-K per company, extract
 // fundamentals, derive metrics, and apply the hard filter and quality score.
 // It returns the resulting candidates and the most recent quarter covered,
 // for the caller to persist — this package stays free of any database
 // dependency so it can be unit-tested without one, as it has been all along.
-func CalculateTopCompanies(resourcesDir string) ([]Candidate, string, error) {
-	err := updateLatestStatements(baseURL, resourcesDir)
-	if err != nil {
-		return nil, "", err
-	}
-
-	zipPaths, err := filepath.Glob(filepath.Join(resourcesDir, "*.zip"))
-	if err != nil {
-		return nil, "", err
-	}
-
+func CalculateTopCompanies(resourcesDir string, zipPaths []string) ([]Candidate, string, error) {
 	var submissions []Submission
 	for _, filename := range zipPaths {
 		subs, err := readTenKSubmissions(filename)
@@ -66,23 +83,14 @@ func CalculateTopCompanies(resourcesDir string) ([]Candidate, string, error) {
 	ComputeQualityScores(candidates)
 
 	passing := 0
-	var latestQuarter string
 	for _, c := range candidates {
 		if c.PassesHardFilter {
 			passing++
 		}
 	}
-	for _, sub := range latest {
-		// SourceZip is "YYYYqQ" (e.g. "2026q2"), fixed-width enough that
-		// plain string comparison sorts it chronologically, same trick as
-		// the Filed-date comparison in latestTenKByCIK.
-		if sub.SourceZip > latestQuarter {
-			latestQuarter = sub.SourceZip
-		}
-	}
 	slog.Info("applied hard filters", "companies", len(candidates), "passing", passing)
 
-	return candidates, latestQuarter, nil
+	return candidates, LatestQuarterLabel(zipPaths), nil
 }
 
 // updateLatestStatements finds the newest latestQuarterCount SEC financial

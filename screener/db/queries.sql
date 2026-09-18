@@ -43,6 +43,9 @@ ON CONFLICT (cik) DO UPDATE SET
 INSERT INTO ingestion_runs (quarter, company_count)
 VALUES ($1, $2);
 
+-- name: GetLatestIngestionQuarter :one
+SELECT quarter FROM ingestion_runs ORDER BY id DESC LIMIT 1;
+
 -- name: ListCandidates :many
 SELECT cik, name, period_end, adsh,
        assets, liabilities, stockholders_equity,
