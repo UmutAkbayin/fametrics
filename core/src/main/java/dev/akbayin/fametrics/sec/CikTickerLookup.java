@@ -1,6 +1,7 @@
 package dev.akbayin.fametrics.sec;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,13 +12,19 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A cached, periodically-refreshed CIK-to-ticker mapping. Tickers change
- * rarely, so this is loaded once at startup ({@link PostConstruct}, which
- * blocks readiness until the first fetch succeeds — better than serving
- * requests for a few seconds with an empty map and every candidate
- * dropping) and re-fetched daily thereafter ({@link Scheduled}, with an
- * initialDelay equal to the refresh interval so it doesn't immediately
- * re-fetch what PostConstruct just fetched).
+ * rarely, so this is fetched eagerly at startup ({@link PostConstruct}) and
+ * re-fetched daily thereafter ({@link Scheduled}, with an initialDelay equal
+ * to the refresh interval so it doesn't immediately re-fetch what
+ * PostConstruct just fetched).
+ * <p>
+ * A failure here (SEC unreachable, a misconfigured User-Agent, ...) must
+ * never crash application startup or wipe out a previously-good cache — the
+ * rest of core, including the pre-existing metrics engine, has nothing to
+ * do with this feature and must keep working regardless. On failure the
+ * ranking feature just degrades (every ticker lookup misses) until the next
+ * successful refresh, rather than the whole application going down.
  */
+@Slf4j
 @Component
 public class CikTickerLookup {
 
@@ -37,7 +44,13 @@ public class CikTickerLookup {
     @PostConstruct
     @Scheduled(initialDelay = REFRESH_INTERVAL_HOURS, fixedRate = REFRESH_INTERVAL_HOURS, timeUnit = TimeUnit.HOURS)
     void refresh() {
-        Map<String, SecTickerEntry> entries = client.fetchTickerEntries();
+        Map<String, SecTickerEntry> entries;
+        try {
+            entries = client.fetchTickerEntries();
+        } catch (RuntimeException e) {
+            log.warn("failed to fetch SEC ticker file; keeping the existing CIK-to-ticker mapping", e);
+            return;
+        }
 
         // First entry per CIK wins: SEC consistently lists the primary/
         // common-class listing before preferred shares or a second share
