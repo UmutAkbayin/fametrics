@@ -79,7 +79,7 @@ public class PriceCache {
                     noPrice++;
                     continue;
                 }
-                next.put(candidate.cik(), new CachedPrice(profile.get().price(), profile.get().marketCap(), Instant.now()));
+                next.put(candidate.cik(), new CachedPrice(ticker.get(), profile.get().price(), profile.get().marketCap(), Instant.now()));
             } catch (RuntimeException e) {
                 // One bad symbol (rate limit, delisted, transient network
                 // error) must not abort pricing for the rest of the batch.
