@@ -21,6 +21,15 @@ servers:
 tags:
   - name: Valuation
     description: Individual and aggregate valuation metric calculations
+  - name: Candidates
+    description: >
+      Orchestration layer: pulls fundamentals-only candidates from the
+      screener service, prices them from core's own FMP-backed price cache
+      (resolved via a SEC CIK-to-ticker lookup, both refreshed on a
+      schedule, not live per request), runs them through the Valuation
+      metrics above in-process, and returns a combined ranking. Unlike the
+      Valuation endpoints, this calls the screener live and can return 503
+      if it's unavailable.
 
 paths:
   /api/metrics/pe-ttm:
@@ -297,6 +306,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/SummaryResponse"
 
+  /api/candidates/top:
+    get:
+      tags: [Candidates]
+      summary: Top-ranked value-investing candidates
+      description: >
+        Combines the screener's fundamentals-only quality_score with core's
+        own price-dependent Value Score (a 50/50-weighted composite;
+        weighting is a tunable starting point, not a researched value),
+        sorted descending. A candidate needs both scores to appear at all —
+        one missing an entire factor (e.g. no price could be resolved for
+        it) is left out rather than partially scored. Always computed
+        fresh against the screener's current candidates and core's current
+        price/ticker caches — no caching or change-detection on this
+        endpoint itself.
+      operationId: getTopCandidates
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+      responses:
+        "200":
+          description: Top candidates, sorted by finalScore descending (possibly empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopCandidateResponse"
+        "503":
+          description: >
+            A required upstream service (currently: the screener) is
+            unavailable. Distinct from 500 — this isn't a bug in core, an
+            upstream dependency is temporarily down.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   requestBodies:
     SummaryRequest:
@@ -469,3 +520,74 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricResponse"
+
+    ValueScore:
+      type: object
+      description: >
+        core's own price-dependent ranking, separate from the screener's
+        fundamentals-only quality_score. Each *Percentile field is a 0-100
+        percentile rank of that metric across the current candidate pool,
+        not the raw metric value. ROE is deliberately not a component here
+        even though it's one of the Valuation metrics — the screener's
+        quality_score already ranks on it, and including it again here
+        would double-weight it once quality_score and this composite are
+        combined into finalScore.
+      properties:
+        peTtmPercentile:
+          $ref: "#/components/schemas/DecimalResult"
+        pbRatioPercentile:
+          $ref: "#/components/schemas/DecimalResult"
+        psRatioPercentile:
+          $ref: "#/components/schemas/DecimalResult"
+        pegRatioPercentile:
+          $ref: "#/components/schemas/DecimalResult"
+        discountToFairValuePercentile:
+          $ref: "#/components/schemas/DecimalResult"
+          description: >
+            Percentile rank of 1 - price/fairValue, averaging the Graham
+            Number and Lynch Fair Value estimates where both are available.
+            Higher is more undervalued.
+        composite:
+          $ref: "#/components/schemas/DecimalResult"
+          description: Average of whichever of the fields above are present for this candidate.
+
+    TopCandidateResponse:
+      type: object
+      properties:
+        cik:
+          type: integer
+          format: int64
+        name:
+          type: string
+        ticker:
+          type: string
+        periodEnd:
+          type: string
+          format: date
+          description: Fiscal year end date of the 10-K this candidate's fundamentals reflect.
+        price:
+          $ref: "#/components/schemas/DecimalResult"
+          description: The cached FMP price this candidate was ranked against — not necessarily live.
+        qualityScore:
+          $ref: "#/components/schemas/DecimalResult"
+          description: The screener's own fundamentals-only 0-100 percentile score.
+        valueScore:
+          $ref: "#/components/schemas/ValueScore"
+        finalScore:
+          $ref: "#/components/schemas/DecimalResult"
+          description: 50/50-weighted combination of qualityScore and valueScore.composite — what the list is sorted by.
+        metrics:
+          type: array
+          description: >
+            Full per-metric detail (value, rating, interpretation) from the
+            existing Valuation engine, run unmodified against this
+            candidate's data — the same shape as /summary/assessment.
+          items:
+            $ref: "#/components/schemas/MetricResponse"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "A required upstream service is currently unavailable. Please try again shortly."
