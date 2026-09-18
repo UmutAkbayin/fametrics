@@ -26,7 +26,14 @@ const latestQuarterCount = 4
 // changed (via LatestQuarterLabel) before paying for the much more
 // expensive submission/fundamentals/metrics pipeline.
 func SyncLatestZips(resourcesDir string) ([]string, error) {
-	if err := updateLatestStatements(baseURL, resourcesDir); err != nil {
+	return syncLatestZipsFrom(baseURL, resourcesDir)
+}
+
+// syncLatestZipsFrom is SyncLatestZips with the SEC page URL as a parameter,
+// so tests can point it at an httptest server instead of the real SEC site
+// — same split as updateLatestStatements/its callers.
+func syncLatestZipsFrom(pageURL, resourcesDir string) ([]string, error) {
+	if err := updateLatestStatements(pageURL, resourcesDir); err != nil {
 		return nil, err
 	}
 	return filepath.Glob(filepath.Join(resourcesDir, "*.zip"))

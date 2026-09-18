@@ -129,3 +129,76 @@ func TestUpdateLatestStatements_PropagatesFindError(t *testing.T) {
 		t.Fatal("expected an error when the page can't be fetched")
 	}
 }
+
+func TestLatestQuarterLabel_PicksTheMostRecent(t *testing.T) {
+	zipPaths := []string{
+		"/resources/2025q3.zip",
+		"/resources/2026q2.zip",
+		"/resources/2025q4.zip",
+		"/resources/2026q1.zip",
+	}
+
+	got := LatestQuarterLabel(zipPaths)
+
+	if got != "2026q2" {
+		t.Errorf("expected 2026q2, got %q", got)
+	}
+}
+
+func TestLatestQuarterLabel_SingleZip(t *testing.T) {
+	got := LatestQuarterLabel([]string{"/resources/2026q1.zip"})
+
+	if got != "2026q1" {
+		t.Errorf("expected 2026q1, got %q", got)
+	}
+}
+
+func TestLatestQuarterLabel_EmptyInput(t *testing.T) {
+	got := LatestQuarterLabel(nil)
+
+	if got != "" {
+		t.Errorf("expected an empty label for no zips, got %q", got)
+	}
+}
+
+func TestSyncLatestZips_ReturnsAllDownloadedAndExistingPaths(t *testing.T) {
+	t.Setenv("SEC_USER_AGENT_EMAIL", "test@example.com")
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/files/2026q2.zip", "/files/2025q4.zip":
+			fmt.Fprintf(w, "content for %s", r.URL.Path)
+		default:
+			w.Write([]byte(`
+				<a href="` + server.URL + `/files/2026q2.zip">2026 Q2</a>
+				<a href="` + server.URL + `/files/2025q4.zip">2025 Q4</a>
+			`))
+		}
+	}))
+	defer server.Close()
+
+	dir := t.TempDir()
+	// updateLatestStatements only reads latestQuarterCount links off the
+	// page; SyncLatestZips itself doesn't need latestQuarterCount to match,
+	// it just globs whatever ends up on disk afterward.
+	got, err := syncLatestZipsFrom(server.URL, dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(got) != 2 {
+		t.Fatalf("expected 2 zip paths, got %d: %v", len(got), got)
+	}
+	for _, name := range []string{"2026q2.zip", "2025q4.zip"} {
+		found := false
+		for _, p := range got {
+			if filepath.Base(p) == name {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("expected %s among the returned paths, got %v", name, got)
+		}
+	}
+}
