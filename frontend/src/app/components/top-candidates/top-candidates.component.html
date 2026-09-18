@@ -1,0 +1,428 @@
+<div class="top-candidates-container">
+  <!-- Banner -->
+  <div class="overview-banner">
+    <div class="banner-badge">
+      <mat-icon class="material-symbols-outlined badge-icon">leaderboard</mat-icon>
+      Automated Pipeline
+    </div>
+    <h1 class="page-title">Top 20 Value Candidates</h1>
+    <p class="page-subtitle">
+      Pre-filtered on balance sheet strength by the SEC EDGAR screener, enriched with live market pricing,
+      and ranked using Core's 50/50 Quality + Value valuation engine.
+    </p>
+  </div>
+
+  <!-- Controls Toolbar -->
+  <div class="toolbar-panel glass-panel">
+    <div class="search-section">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix class="material-symbols-outlined">search</mat-icon>
+        <mat-label>Filter by ticker, name, or CIK</mat-label>
+        <input
+          matInput
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="e.g. AAPL, Apple, 320193"
+          aria-label="Filter candidates"
+        />
+        @if (searchQuery()) {
+          <button mat-icon-button matSuffix (click)="searchQuery.set('')" aria-label="Clear filter">
+            <mat-icon class="material-symbols-outlined">close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="sort-actions">
+      <span class="sort-label">Sort by:</span>
+      <button
+        mat-button
+        class="sort-pill"
+        [class.active]="sortBy() === 'finalScore'"
+        (click)="setSort('finalScore')"
+      >
+        Final Score
+        @if (sortBy() === 'finalScore') {
+          <mat-icon class="material-symbols-outlined sort-icon">
+            {{ sortDirection() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </mat-icon>
+        }
+      </button>
+
+      <button
+        mat-button
+        class="sort-pill"
+        [class.active]="sortBy() === 'qualityScore'"
+        (click)="setSort('qualityScore')"
+      >
+        Quality
+        @if (sortBy() === 'qualityScore') {
+          <mat-icon class="material-symbols-outlined sort-icon">
+            {{ sortDirection() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </mat-icon>
+        }
+      </button>
+
+      <button
+        mat-button
+        class="sort-pill"
+        [class.active]="sortBy() === 'valueScore'"
+        (click)="setSort('valueScore')"
+      >
+        Value
+        @if (sortBy() === 'valueScore') {
+          <mat-icon class="material-symbols-outlined sort-icon">
+            {{ sortDirection() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </mat-icon>
+        }
+      </button>
+
+      <button
+        mat-button
+        class="sort-pill"
+        [class.active]="sortBy() === 'ticker'"
+        (click)="setSort('ticker')"
+      >
+        Ticker
+        @if (sortBy() === 'ticker') {
+          <mat-icon class="material-symbols-outlined sort-icon">
+            {{ sortDirection() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}
+          </mat-icon>
+        }
+      </button>
+
+      <button
+        mat-raised-button
+        color="primary"
+        class="refresh-btn"
+        (click)="loadCandidates()"
+        [disabled]="loading()"
+      >
+        <mat-icon class="material-symbols-outlined" [class.spinning]="loading()">refresh</mat-icon>
+        Refresh List
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  @if (errorMessage()) {
+    <div class="error-banner glass-panel">
+      <mat-icon class="material-symbols-outlined error-icon">error_outline</mat-icon>
+      <div class="error-content">
+        <div class="error-title">Unable to Fetch Candidates</div>
+        <div class="error-message">{{ errorMessage() }}</div>
+      </div>
+      <button mat-stroked-button class="retry-btn" (click)="loadCandidates()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading() && candidates().length === 0) {
+    <div class="loading-state glass-panel">
+      <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+      <p class="loading-text">Screening SEC filings and computing real-time valuation metrics...</p>
+    </div>
+  }
+
+  <!-- Empty Search / Empty List State -->
+  @if (!loading() && !errorMessage() && filteredCandidates().length === 0) {
+    <div class="empty-state glass-panel">
+      <mat-icon class="material-symbols-outlined empty-icon">filter_alt_off</mat-icon>
+      <h3>No candidates match your criteria</h3>
+      <p>Try adjusting your search query or refreshing the candidate list.</p>
+      @if (searchQuery()) {
+        <button mat-button class="clear-filter-btn" (click)="searchQuery.set('')">
+          Clear Filter
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Candidates Master Table -->
+  @if (filteredCandidates().length > 0) {
+    <div class="table-wrapper glass-panel">
+      <div class="table-header-meta">
+        <span class="count-badge">
+          Showing {{ filteredCandidates().length }} of {{ candidates().length }} Candidates
+        </span>
+        <span class="instruction-hint">
+          Click any row to inspect full valuation metrics & factor breakdown
+        </span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="candidates-table" aria-label="Top Ranked Candidates Table">
+          <thead>
+            <tr>
+              <th class="col-rank">Rank</th>
+              <th class="col-company">Company</th>
+              <th class="col-price">Price</th>
+              <th class="col-period">FY End</th>
+              <th class="col-score">Quality Score</th>
+              <th class="col-score">Value Score</th>
+              <th class="col-score col-final">Final Score</th>
+              <th class="col-action">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of filteredCandidates(); track c.cik; let idx = $index) {
+              <tr
+                class="candidate-row"
+                [class.selected]="selectedCandidate()?.cik === c.cik"
+                (click)="selectCandidate(c)"
+              >
+                <!-- Rank -->
+                <td class="col-rank">
+                  <span
+                    class="rank-badge"
+                    [class.rank-gold]="idx === 0"
+                    [class.rank-silver]="idx === 1"
+                    [class.rank-bronze]="idx === 2"
+                  >
+                    #{{ idx + 1 }}
+                  </span>
+                </td>
+
+                <!-- Company -->
+                <td class="col-company">
+                  <div class="company-cell">
+                    <div class="ticker-badge">{{ c.ticker }}</div>
+                    <div class="company-details">
+                      <span class="company-name" [title]="c.name">{{ c.name }}</span>
+                      <span class="company-cik">CIK: {{ c.cik }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Price -->
+                <td class="col-price">
+                  <span class="price-value">${{ c.price | number:'1.2-2' }}</span>
+                </td>
+
+                <!-- Period End -->
+                <td class="col-period">
+                  <span class="period-text">{{ c.periodEnd | date:'mediumDate' }}</span>
+                </td>
+
+                <!-- Quality Score -->
+                <td class="col-score">
+                  <div class="score-pill quality-pill" [matTooltip]="'Fundamentals percentile (ROE + Net Margin) from screener'">
+                    {{ c.qualityScore | number:'1.1-1' }}
+                  </div>
+                </td>
+
+                <!-- Value Score -->
+                <td class="col-score">
+                  <div class="score-pill value-pill" [matTooltip]="'Price-dependent composite percentile from Core'">
+                    {{ c.valueScore?.composite | number:'1.1-1' }}
+                  </div>
+                </td>
+
+                <!-- Final Score -->
+                <td class="col-score col-final">
+                  <div class="score-pill final-pill" [matTooltip]="'50% Quality Score + 50% Value Score'">
+                    {{ c.finalScore | number:'1.1-1' }}
+                  </div>
+                </td>
+
+                <!-- Action Button -->
+                <td class="col-action">
+                  <button
+                    mat-button
+                    class="inspect-btn"
+                    [class.active]="selectedCandidate()?.cik === c.cik"
+                    (click)="selectCandidate(c); $event.stopPropagation()"
+                    aria-label="Inspect candidate details"
+                  >
+                    <mat-icon class="material-symbols-outlined">analytics</mat-icon>
+                    Inspect
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Detail View: Candidate Deep Dive -->
+  @if (selectedCandidate(); as candidate) {
+    <section class="detail-section glass-panel" aria-label="Candidate Valuation Details">
+      <!-- Detail Header -->
+      <div class="detail-header">
+        <div class="candidate-identity">
+          <div class="ticker-large">{{ candidate.ticker }}</div>
+          <div class="identity-info">
+            <h2 class="candidate-name">{{ candidate.name }}</h2>
+            <div class="candidate-meta-tags">
+              <span class="meta-tag">CIK: {{ candidate.cik }}</span>
+              <span class="meta-tag">Filing: {{ candidate.periodEnd | date:'mediumDate' }}</span>
+              <span class="meta-tag price-tag">Price: ${{ candidate.price | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button
+            mat-stroked-button
+            class="action-btn workspace-btn"
+            (click)="onSendToWorkspace(candidate)"
+            matTooltip="Pre-fill available data into Valuation Workspace for what-if exploration"
+          >
+            <mat-icon class="material-symbols-outlined">open_in_new</mat-icon>
+            Open in Workspace
+          </button>
+          <button
+            mat-icon-button
+            class="close-btn"
+            (click)="clearSelection()"
+            aria-label="Close candidate details"
+          >
+            <mat-icon class="material-symbols-outlined">close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Score Breakdown Section -->
+      <div class="score-breakdown-section">
+        <h3 class="section-title">
+          <mat-icon class="material-symbols-outlined title-icon">query_stats</mat-icon>
+          Ranking Score Breakdown
+        </h3>
+
+        <div class="scores-triad">
+          <!-- Final Score -->
+          <div class="score-card final-card">
+            <div class="score-header">
+              <span class="card-label">Final Ranking Score</span>
+              <span class="formula-pill">50% Q + 50% V</span>
+            </div>
+            <div class="score-number">{{ candidate.finalScore | number:'1.2-2' }}</div>
+            <p class="score-desc">Overall value-investing composite used to rank candidates.</p>
+          </div>
+
+          <!-- Quality Score -->
+          <div class="score-card quality-card">
+            <div class="score-header">
+              <span class="card-label">Screener Quality Score</span>
+              <span class="formula-pill">Fundamentals</span>
+            </div>
+            <div class="score-number">{{ candidate.qualityScore | number:'1.2-2' }}</div>
+            <p class="score-desc">0–100 percentile rank on ROE & net margin across passed filings.</p>
+          </div>
+
+          <!-- Value Score -->
+          <div class="score-card value-card">
+            <div class="score-header">
+              <span class="card-label">Core Value Score</span>
+              <span class="formula-pill">Price Relative</span>
+            </div>
+            <div class="score-number">{{ candidate.valueScore?.composite | number:'1.2-2' }}</div>
+            <p class="score-desc">Average of 5 relative price multiple percentiles across pool.</p>
+          </div>
+        </div>
+
+        <!-- 5-Factor Percentile Gauges -->
+        <div class="percentile-factors-grid">
+          <div class="factor-item">
+            <div class="factor-header">
+              <span class="factor-name">P/E (TTM) %ile</span>
+              <span class="factor-val">{{ candidate.valueScore?.peTtmPercentile ?? 'N/A' }}</span>
+            </div>
+            <div class="factor-track">
+              <div
+                class="factor-fill"
+                [style.width.%]="candidate.valueScore?.peTtmPercentile ?? 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="factor-item">
+            <div class="factor-header">
+              <span class="factor-name">P/B Ratio %ile</span>
+              <span class="factor-val">{{ candidate.valueScore?.pbRatioPercentile ?? 'N/A' }}</span>
+            </div>
+            <div class="factor-track">
+              <div
+                class="factor-fill"
+                [style.width.%]="candidate.valueScore?.pbRatioPercentile ?? 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="factor-item">
+            <div class="factor-header">
+              <span class="factor-name">P/S Ratio %ile</span>
+              <span class="factor-val">{{ candidate.valueScore?.psRatioPercentile ?? 'N/A' }}</span>
+            </div>
+            <div class="factor-track">
+              <div
+                class="factor-fill"
+                [style.width.%]="candidate.valueScore?.psRatioPercentile ?? 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="factor-item">
+            <div class="factor-header">
+              <span class="factor-name">PEG Ratio %ile</span>
+              <span class="factor-val">{{ candidate.valueScore?.pegRatioPercentile ?? 'N/A' }}</span>
+            </div>
+            <div class="factor-track">
+              <div
+                class="factor-fill"
+                [style.width.%]="candidate.valueScore?.pegRatioPercentile ?? 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="factor-item">
+            <div class="factor-header">
+              <span class="factor-name">Fair Value Discount %ile</span>
+              <span class="factor-val">{{ candidate.valueScore?.discountToFairValuePercentile ?? 'N/A' }}</span>
+            </div>
+            <div class="factor-track">
+              <div
+                class="factor-fill"
+                [style.width.%]="candidate.valueScore?.discountToFairValuePercentile ?? 0"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Valuation Metric Cards -->
+      <div class="metric-cards-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <mat-icon class="material-symbols-outlined title-icon">speed</mat-icon>
+            Computed Valuation Metrics
+          </h3>
+          <span class="metrics-count">
+            {{ candidate.metrics?.length ?? 0 }} of 8 Metrics Computed
+          </span>
+        </div>
+
+        <div class="metric-cards-grid">
+          @for (m of metrics; track m.id) {
+            <app-metric-card
+              [title]="m.title"
+              [abbreviation]="m.abbreviation"
+              [formula]="m.formula"
+              [metricId]="m.id"
+              [metricResult]="getMetricResult(candidate, m.id)"
+              [loading]="false"
+              [requiredInputs]="m.required"
+              [missingInputs]="[]"
+              [sharePrice]="candidate.price"
+            >
+            </app-metric-card>
+          }
+        </div>
+      </div>
+    </section>
+  }
+</div>
