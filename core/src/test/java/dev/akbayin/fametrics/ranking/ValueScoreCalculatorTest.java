@@ -38,7 +38,7 @@ class ValueScoreCalculatorTest {
             null, null, null, null, null, null, null, null,
             true, OffsetDateTime.now()
         );
-        var cachedPrice = new CachedPrice(price, new BigDecimal("1000"), Instant.now());
+        var cachedPrice = new CachedPrice("TICK" + cik, price, new BigDecimal("1000"), Instant.now());
         return new AssessedCandidate(candidate, cachedPrice, new SummaryResponse(List.of(metrics)));
     }
 
