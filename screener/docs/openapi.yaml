@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: fametrics screener API
+  description: >
+    Serves the value-investing candidates the screener has ingested from SEC
+    EDGAR and price-independently filtered/scored. This is the API `core`
+    calls to fetch candidates before enriching them with live prices.
+  version: "1.0"
+servers:
+  - url: http://localhost:8081
+    description: Local development
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      operationId: getHealth
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /candidates:
+    get:
+      summary: List value-investing candidates
+      description: >
+        Companies that passed every hard filter (positive equity, two years
+        of positive free cash flow, debt-to-equity under 1, ROE over 10%),
+        ordered by quality_score descending (unranked passers sort last).
+        Always queries the current state of the companies table — no
+        caching, no change-detection; call it fresh every time.
+      operationId: listCandidates
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of candidates to return.
+          schema:
+            type: integer
+            minimum: 1
+            default: 200
+      responses:
+        "200":
+          description: The candidate list, possibly empty.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Company"
+        "400":
+          description: limit was present but not a positive integer.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "limit must be a positive integer"
+
+components:
+  schemas:
+    Company:
+      type: object
+      description: >
+        One company's most recent 10-K, reduced to price-independent
+        fundamentals, derived metrics, and the hard-filter/quality-score
+        result. Any numeric field can be null if the source filing didn't
+        report that XBRL tag at all.
+      required:
+        - cik
+        - name
+        - period_end
+        - adsh
+        - passes_hard_filter
+        - updated_at
+      properties:
+        cik:
+          type: integer
+          format: int64
+          description: SEC Central Index Key, this company's stable identifier.
+          example: 320193
+        name:
+          type: string
+          example: APPLE INC
+        period_end:
+          type: string
+          format: date
+          description: Fiscal year end date of the 10-K this row reflects.
+        adsh:
+          type: string
+          description: SEC accession number of the source 10-K.
+          example: "0000320193-25-000073"
+        assets:
+          type: number
+          nullable: true
+        liabilities:
+          type: number
+          nullable: true
+        stockholders_equity:
+          type: number
+          nullable: true
+        net_income:
+          type: number
+          nullable: true
+        operating_income:
+          type: number
+          nullable: true
+        operating_cash_flow:
+          type: number
+          nullable: true
+        capex:
+          type: number
+          nullable: true
+        revenue:
+          type: number
+          nullable: true
+        cash:
+          type: number
+          nullable: true
+        long_term_debt:
+          type: number
+          nullable: true
+        shares_outstanding:
+          type: number
+          nullable: true
+        operating_cash_flow_prior:
+          type: number
+          nullable: true
+          description: Prior fiscal year's operating cash flow, for the 2-year FCF filter.
+        capex_prior:
+          type: number
+          nullable: true
+        net_income_prior:
+          type: number
+          nullable: true
+        eps:
+          type: number
+          nullable: true
+          description: net_income / shares_outstanding.
+        bvps:
+          type: number
+          nullable: true
+          description: stockholders_equity / shares_outstanding.
+        eps_growth_rate:
+          type: number
+          nullable: true
+          description: (eps - eps_prior) / eps_prior, as a fraction (0.15 = 15%).
+        quality_score:
+          type: number
+          nullable: true
+          description: >
+            0-100 percentile rank on ROE and net margin among the other
+            companies that passed the hard filter this run. Null if this
+            company didn't pass the hard filter, or if net_margin couldn't
+            be computed even though it did.
+        passes_hard_filter:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
