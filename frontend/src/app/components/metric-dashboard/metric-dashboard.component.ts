@@ -11,16 +11,11 @@ import {
   SummaryResponse,
   SummaryRequest,
   MetricType,
-  MetricResponse
+  MetricResponse,
+  MetricDef,
+  METRIC_DEFINITIONS,
+  TopCandidateResponse
 } from '../../services/stock-valuation.service';
-
-interface MetricDef {
-  id: MetricType;
-  title: string;
-  abbreviation: string;
-  formula: string;
-  required: string[];
-}
 
 @Component({
   selector: 'app-metric-dashboard',
@@ -43,16 +38,7 @@ export class MetricDashboardComponent implements OnInit {
   results = signal<SummaryResponse | null>(null);
   errorMessage = signal<string | null>(null);
 
-  metrics: MetricDef[] = [
-    { id: 'PE_TTM', title: 'Price-to-Earnings Ratio', abbreviation: 'P/E (TTM)', formula: 'Price / EPS', required: ['sharePrice', 'eps'] },
-    { id: 'PB_RATIO', title: 'Price-to-Book Ratio', abbreviation: 'P/B', formula: 'Price / BVPS', required: ['sharePrice', 'bvps'] },
-    { id: 'PS_RATIO', title: 'Price-to-Sales Ratio', abbreviation: 'P/S', formula: 'Market Cap / Revenue', required: ['marketCap', 'totalRevenue'] },
-    { id: 'PEG_RATIO', title: 'Price/Earnings-to-Growth', abbreviation: 'PEG', formula: 'P/E / (Growth × 100)', required: ['sharePrice', 'eps', 'epsGrowthRate'] },
-    { id: 'DE_RATIO', title: 'Debt-to-Equity Ratio', abbreviation: 'D/E', formula: 'Liabilities / Equity', required: ['totalLiabilities', 'totalEquity'] },
-    { id: 'ROE', title: 'Return on Equity', abbreviation: 'ROE', formula: 'Net Income / Equity', required: ['netIncome', 'totalEquity'] },
-    { id: 'GRAHAM_NUMBER', title: 'Graham Number', abbreviation: 'Graham #', formula: '√(22.5 × EPS × BVPS)', required: ['eps', 'bvps'] },
-    { id: 'LYNCH_FAIR_VALUE', title: 'Peter Lynch Fair Value', abbreviation: 'Lynch FV', formula: 'EPS × (Growth × 100)', required: ['eps', 'epsGrowthRate'] }
-  ];
+  metrics: MetricDef[] = METRIC_DEFINITIONS;
 
   constructor(
     private fb: FormBuilder,
@@ -171,6 +157,19 @@ export class MetricDashboardComponent implements OnInit {
       netIncome: 12000000
     });
     this.calculate();
+  }
+
+  prefillFromCandidate(candidate: TopCandidateResponse) {
+    const pe = candidate.metrics?.find((m) => m.metric === 'PE_TTM')?.value;
+    const pb = candidate.metrics?.find((m) => m.metric === 'PB_RATIO')?.value;
+    const eps = pe && candidate.price ? +(candidate.price / pe).toFixed(2) : null;
+    const bvps = pb && candidate.price ? +(candidate.price / pb).toFixed(2) : null;
+
+    this.inputForm.patchValue({
+      sharePrice: candidate.price,
+      eps,
+      bvps
+    });
   }
 
   reset() {
