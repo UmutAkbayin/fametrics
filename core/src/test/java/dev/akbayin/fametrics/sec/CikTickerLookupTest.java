@@ -60,4 +60,17 @@ class CikTickerLookupTest {
 
         assertThat(lookup.findTicker(1652044L)).contains("GOOGL");
     }
+
+    @Test
+    void refresh_whenFetchFails_keepsThePreviouslyCachedMappingAndDoesNotThrow() {
+        when(client.fetchTickerEntries()).thenReturn(Map.of(
+            "0", new SecTickerEntry(320193L, "AAPL", "Apple Inc.")
+        ));
+        lookup.refresh(); // first, successful refresh
+
+        when(client.fetchTickerEntries()).thenThrow(new RuntimeException("SEC unreachable"));
+        lookup.refresh(); // second refresh fails — must not throw, must not wipe the cache
+
+        assertThat(lookup.findTicker(320193L)).contains("AAPL");
+    }
 }
