@@ -145,3 +145,90 @@ body, .custom-scrollbar {
   --mdc-outlined-card-container-color: var(--card-bg);
   --mdc-outlined-card-outline-color: var(--card-border);
 }
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  &.rank-gold { background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.4); color: #fbbf24; }
+  &.rank-silver { background: rgba(148, 163, 184, 0.15); border-color: rgba(148, 163, 184, 0.4); color: #cbd5e1; }
+  &.rank-bronze { background: rgba(217, 119, 6, 0.15); border-color: rgba(217, 119, 6, 0.4); color: #f59e0b; }
+}
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 700;
+
+  &.quality-pill { background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
+  &.value-pill { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; }
+  &.final-pill {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.45);
+    color: #a5b4fc;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+}
+
+.ticker-badge {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.scores-triad {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px;
+  .score-card {
+    padding: 14px; border-radius: 10px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--card-border);
+    .score-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+      .card-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); }
+      .formula-pill { font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); }
+    }
+    .score-number { font-size: 1.8rem; font-weight: 900; line-height: 1.1; margin-bottom: 4px; }
+    .score-desc { font-size: 0.75rem; color: var(--text-secondary); }
+    &.final-card { border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.08); .score-number { color: #a5b4fc; } }
+    &.quality-card { border-color: rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.06); .score-number { color: #60a5fa; } }
+    &.value-card { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.06); .score-number { color: #34d399; } }
+  }
+}
+
+.percentile-factors-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; padding: 10px;
+  border-radius: 10px; background: rgba(0, 0, 0, 0.15); border: 1px solid var(--card-border); margin-bottom: 24px;
+  .factor-item {
+    padding: 4px 8px;
+    .factor-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+      .factor-name { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+      .factor-val { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); }
+    }
+    .factor-track {
+      height: 4px; border-radius: 2px; background: var(--gauge-track); overflow: hidden;
+      .factor-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #6366f1, #34d399); }
+    }
+  }
+}
