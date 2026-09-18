@@ -19,6 +19,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -110,5 +112,50 @@ class PriceCacheTest {
         Optional<CachedPrice> stillCached = priceCache.findPrice(1L);
         assertThat(stillCached).isPresent();
         assertThat(stillCached.get().price()).isEqualByComparingTo("50.00");
+    }
+
+    @Test
+    void refreshIfDue_whenScreenerSucceedsButNoTickerResolvesForAnyCandidate_keepsRetrying() {
+        // The exact cascading failure observed live: CikTickerLookup's own
+        // mapping was empty (SEC rate-limited it), so every candidate here
+        // misses its ticker even though the screener call itself succeeds.
+        // That must NOT count as "successful" — otherwise this settles into
+        // the 24h cadence and stays empty long after CikTickerLookup itself
+        // has already recovered.
+        when(screenerClient.fetchCandidates(anyInt())).thenReturn(List.of(candidate(1L)));
+        when(tickerLookup.findTicker(1L)).thenReturn(Optional.empty());
+
+        priceCache.refreshIfDue();
+        priceCache.refreshIfDue();
+        priceCache.refreshIfDue();
+
+        verify(screenerClient, times(3)).fetchCandidates(anyInt());
+    }
+
+    @Test
+    void refreshIfDue_whenScreenerHasNoCandidatesAtAll_isStillTreatedAsSuccessful() {
+        // Distinct from the case above: the screener genuinely has nothing
+        // to give us right now (a legitimate state, not a failure), so
+        // there's no benefit to retrying every 5 minutes for this reason.
+        when(screenerClient.fetchCandidates(anyInt())).thenReturn(List.of());
+
+        priceCache.refreshIfDue();
+        priceCache.refreshIfDue();
+
+        verify(screenerClient, times(1)).fetchCandidates(anyInt());
+    }
+
+    @Test
+    void refreshIfDue_afterActuallyPricingSomething_doesNotRefetchImmediately() {
+        when(screenerClient.fetchCandidates(anyInt())).thenReturn(List.of(candidate(1L)));
+        when(tickerLookup.findTicker(1L)).thenReturn(Optional.of("ACME"));
+        when(fmpClient.fetchProfile("ACME")).thenReturn(Optional.of(
+            new FmpProfile("ACME", new BigDecimal("50.00"), new BigDecimal("1"))
+        ));
+
+        priceCache.refreshIfDue();
+        priceCache.refreshIfDue();
+
+        verify(screenerClient, times(1)).fetchCandidates(anyInt());
     }
 }
