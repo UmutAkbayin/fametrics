@@ -1,13 +1,27 @@
 <app-header></app-header>
 
 <main class="main-content">
-  <mat-tab-group dynamicHeight animationDuration="250ms" class="workspace-tabs">
+  <mat-tab-group
+    dynamicHeight
+    animationDuration="250ms"
+    class="workspace-tabs"
+    [selectedIndex]="selectedTabIndex()"
+    (selectedIndexChange)="selectedTabIndex.set($event)"
+  >
     <mat-tab>
       <ng-template mat-tab-label>
         <mat-icon class="material-symbols-outlined tab-icon">dashboard</mat-icon>
         Valuation Workspace
       </ng-template>
       <app-metric-dashboard></app-metric-dashboard>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="material-symbols-outlined tab-icon">leaderboard</mat-icon>
+        Top Candidates
+      </ng-template>
+      <app-top-candidates (openInWorkspace)="onOpenCandidateInWorkspace($event)"></app-top-candidates>
     </mat-tab>
 
     <mat-tab>
