@@ -30,7 +30,7 @@ class FinalScoreCalculatorTest {
     private static RankedCandidate rankedCandidate(long cik, BigDecimal qualityScore, BigDecimal valueComposite) {
         var assessed = new AssessedCandidate(
             candidate(cik, qualityScore),
-            new CachedPrice(new BigDecimal("50"), new BigDecimal("1000"), Instant.now()),
+            new CachedPrice("ACME", new BigDecimal("50"), new BigDecimal("1000"), Instant.now()),
             new SummaryResponse(List.of())
         );
         var valueScore = new ValueScore(null, null, null, null, null, valueComposite);
