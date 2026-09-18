@@ -72,4 +72,37 @@ describe('StockValuationService', () => {
 
     expect(result).toEqual(mockResponse);
   });
+
+  it('gets top candidates with default limit of 20', () => {
+    const mockCandidates = [
+      {
+        cik: 320193,
+        name: 'APPLE INC',
+        ticker: 'AAPL',
+        periodEnd: '2024-09-28',
+        price: 220.5,
+        qualityScore: 92.4,
+        valueScore: { composite: 75.0 },
+        finalScore: 83.7,
+        metrics: []
+      }
+    ];
+
+    let result: any;
+    service.getTopCandidates().subscribe((res) => (result = res));
+
+    const req = httpMock.expectOne('http://localhost:8080/api/candidates/top?limit=20');
+    expect(req.request.method).toBe('GET');
+
+    req.flush(mockCandidates);
+    expect(result).toEqual(mockCandidates);
+  });
+
+  it('gets top candidates with custom limit', () => {
+    service.getTopCandidates(5).subscribe();
+
+    const req = httpMock.expectOne('http://localhost:8080/api/candidates/top?limit=5');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
 });
