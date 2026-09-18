@@ -22,14 +22,16 @@ export class HeaderComponent implements OnInit {
   isDarkMode = signal(true);
 
   ngOnInit() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const savedTheme = typeof localStorage !== 'undefined' && localStorage ? localStorage.getItem('theme') || 'dark' : 'dark';
     this.isDarkMode.set(savedTheme === 'dark');
     this.applyTheme(this.isDarkMode());
   }
 
   toggleTheme() {
     this.isDarkMode.update((v) => !v);
-    localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+    if (typeof localStorage !== 'undefined' && localStorage) {
+      localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+    }
     this.applyTheme(this.isDarkMode());
   }
 
