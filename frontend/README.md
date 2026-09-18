@@ -80,3 +80,9 @@ npm run build # or ng build
 ```
 
 The production bundle will be built in the `dist/fa-metrics-frontend` directory.
+
+---
+
+## License
+
+MIT — see the [repository root `LICENSE`](../LICENSE).
