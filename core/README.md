@@ -1,7 +1,9 @@
 # fa-metrics
 
 A REST API for computing common stock valuation metrics — P/E, P/B, P/S, PEG, D/E,
-ROE, Graham Number, and Peter Lynch Fair Value — from raw financial inputs.
+ROE, Graham Number, and Peter Lynch Fair Value — from raw financial inputs, plus an
+orchestration layer that turns a companion screener service's fundamentals-only
+candidates into a fully-priced, ranked Top N list for a frontend to consume.
 
 Built with Spring Boot 4 and Java 25. All calculations use `BigDecimal` with
 explicit rounding, so results are deterministic and free of floating-point error.
@@ -16,6 +18,21 @@ explicit rounding, so results are deterministic and free of floating-point error
   assessment endpoint (value + benchmark-based rating + interpretation),
   plus a `/summary/assessment` endpoint that returns every metric's
   assessment in one call
+- **`GET /api/candidates/top`** — pulls candidates from the `screener`
+  service, prices them from an FMP-backed cache, runs every candidate
+  through the same valuation engine above in-process (no self HTTP calls),
+  computes a price-dependent Value Score alongside the screener's own
+  fundamentals-only quality_score, and returns the combined ranking
+- CIK-to-ticker resolution (SEC's own free `company_tickers.json`) and FMP
+  pricing are both refreshed on a schedule, not live per request — FMP's
+  free tier is 250 calls/day with no batch endpoint, so pricing ~200
+  candidates on every request isn't viable; prices are "as of the last
+  refresh," a deliberate trade for staying on a free plan
+- Resilient to upstream failures by design, not by accident: a scheduled
+  refresh failure (screener, SEC, or FMP down) logs and keeps serving the
+  last good cache rather than crashing; a live request-path failure (e.g.
+  the screener being unreachable when `/api/candidates/top` is called)
+  returns `503 Service Unavailable` with a clear message, not a raw `500`
 - Request validation (`jakarta.validation`) with structured 400 responses
 - Live, always-in-sync API documentation via springdoc-openapi / Swagger UI
 - CORS enabled for local frontend development (React on `:3000`, Angular on `:4200`)
@@ -26,6 +43,7 @@ explicit rounding, so results are deterministic and free of floating-point error
 |----------------|--------------------------------------|
 | Language       | Java 25                              |
 | Framework      | Spring Boot 4 (Spring MVC)           |
+| HTTP clients   | Spring `RestClient` (screener, FMP, SEC), scheduled via `@Scheduled` |
 | Persistence    | Spring Data JPA / Hibernate, PostgreSQL |
 | Validation     | Jakarta Bean Validation               |
 | API docs       | springdoc-openapi (OpenAPI 3 / Swagger UI) |
@@ -40,6 +58,23 @@ explicit rounding, so results are deterministic and free of floating-point error
 - A running PostgreSQL instance reachable at `localhost:5432` with database
   `fa-metrics` and credentials `postgres` / `postgres` (see
   `src/main/resources/application.properties` to change these)
+- `SEC_USER_AGENT_EMAIL` — SEC requires a real contact email in the
+  User-Agent header on every request to `company_tickers.json`, or it
+  rejects the request with `403`; same requirement the `screener` (Go)
+  service has, same env var name
+- `FMP_API_KEY` — a Financial Modeling Prep API key (the free tier is
+  enough; see the note on call budget above)
+- The `screener` service running at `screener.base-url`
+  (`http://localhost:8081` by default) for `/api/candidates/top` to return
+  real data — the rest of the API (`/api/metrics/...`) doesn't need it
+
+Both env vars are read as plain OS environment variables (`${SEC_USER_AGENT_EMAIL}`,
+`${FMP_API_KEY}` in `application.properties`) — Spring Boot has no built-in
+`.env` file support, unlike the Go screener. A `.env` file is still a
+reasonable place to keep them for local dev (gitignored; this repo has one
+per module) as long as *something* actually loads it into the process
+environment before the JVM starts — e.g. IntelliJ's EnvFile plugin, or your
+run configuration's environment variables field.
 
 ### Run the app
 
@@ -65,7 +100,7 @@ generated directly from the code:
 
 A static snapshot of the spec is also checked in at [`docs/openapi.yaml`](docs/openapi.yaml).
 
-### Endpoints
+### Valuation endpoints
 
 All endpoints are `POST` requests under `/api/metrics` that accept the same
 request body shape — see below. The plain endpoint returns just the
@@ -114,7 +149,23 @@ curl -X POST http://localhost:8080/api/metrics/graham/assessment \
   -d '{"marketData": {"sharePrice": 60.0, "eps": 3.5, "bvps": 22.0}}'
 ```
 
-See [`docs/openapi.yaml`](docs/openapi.yaml) for the full request/response schemas.
+### Candidates endpoint
+
+```bash
+curl http://localhost:8080/api/candidates/top?limit=20
+```
+
+Returns the Top N candidates (default 20), each with its `cik`/`name`/`ticker`,
+the cached `price` it was ranked against, the screener's `qualityScore`, core's
+own `valueScore` (and its percentile components), the combined `finalScore`
+used to sort, and the full per-metric detail (`metrics`) from the Valuation
+engine — the same shape `/summary/assessment` returns.
+
+A candidate only appears if **both** `qualityScore` and `valueScore.composite`
+are present — one missing an entire factor (e.g. no ticker could be resolved
+for its CIK, so no price, so no price-dependent metrics at all) is left out
+rather than scored on whichever single factor it has. `503` means the
+screener itself was unreachable for this request, not that nothing qualified.
 
 ## Project structure
 
@@ -123,9 +174,19 @@ src/main/java/dev/akbayin/fametrics/
 ├── config/       # CORS and OpenAPI configuration
 ├── controller/   # REST controllers — thin, delegate to services
 ├── domain/       # MetricAssessor per metric: calculation + benchmark-based evaluation
-├── dto/          # Request/response records
-├── exception/    # Global exception handling
-└── service/      # Routes requests to the matching MetricAssessor, assembles responses
+├── dto/          # Request/response records (including TopCandidateResponse)
+├── exception/    # Global exception handling — validation errors (400) and
+│                 # upstream service failures (503)
+├── service/      # Routes requests to the matching MetricAssessor, assembles responses
+├── screener/     # Client + DTO for the screener service's GET /candidates
+├── sec/          # SEC company_tickers.json client + cached, scheduled CIK-to-ticker lookup
+├── fmp/          # FMP client + DTO for the /stable/profile endpoint
+├── pricing/      # Cached, scheduled price snapshots keyed by CIK (PriceCache)
+└── ranking/      # The orchestration pipeline: CandidateAssessor (runs the
+                  # existing engine per candidate) → ValueScoreCalculator
+                  # (price-dependent percentile ranking) → FinalScoreCalculator
+                  # (combines with quality_score, sorts, takes top N) →
+                  # TopCandidatesService (ties it together) → TopCandidateMapper
 ```
 
 ## License
