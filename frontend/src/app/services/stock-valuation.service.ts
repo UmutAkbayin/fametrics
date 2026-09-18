@@ -69,11 +69,56 @@ export interface SummaryResponse {
   metrics: MetricResponse[];
 }
 
+export interface ValueScore {
+  peTtmPercentile?: number | null;
+  pbRatioPercentile?: number | null;
+  psRatioPercentile?: number | null;
+  pegRatioPercentile?: number | null;
+  discountToFairValuePercentile?: number | null;
+  composite?: number | null;
+}
+
+export interface TopCandidateResponse {
+  cik: number;
+  name: string;
+  ticker: string;
+  periodEnd: string;
+  price: number;
+  qualityScore: number;
+  valueScore: ValueScore;
+  finalScore: number;
+  metrics: MetricResponse[];
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface MetricDef {
+  id: MetricType;
+  title: string;
+  abbreviation: string;
+  formula: string;
+  required: string[];
+}
+
+export const METRIC_DEFINITIONS: MetricDef[] = [
+  { id: 'PE_TTM', title: 'Price-to-Earnings Ratio', abbreviation: 'P/E (TTM)', formula: 'Price / EPS', required: ['sharePrice', 'eps'] },
+  { id: 'PB_RATIO', title: 'Price-to-Book Ratio', abbreviation: 'P/B', formula: 'Price / BVPS', required: ['sharePrice', 'bvps'] },
+  { id: 'PS_RATIO', title: 'Price-to-Sales Ratio', abbreviation: 'P/S', formula: 'Market Cap / Revenue', required: ['marketCap', 'totalRevenue'] },
+  { id: 'PEG_RATIO', title: 'Price/Earnings-to-Growth', abbreviation: 'PEG', formula: 'P/E / (Growth × 100)', required: ['sharePrice', 'eps', 'epsGrowthRate'] },
+  { id: 'DE_RATIO', title: 'Debt-to-Equity Ratio', abbreviation: 'D/E', formula: 'Liabilities / Equity', required: ['totalLiabilities', 'totalEquity'] },
+  { id: 'ROE', title: 'Return on Equity', abbreviation: 'ROE', formula: 'Net Income / Equity', required: ['netIncome', 'totalEquity'] },
+  { id: 'GRAHAM_NUMBER', title: 'Graham Number', abbreviation: 'Graham #', formula: '√(22.5 × EPS × BVPS)', required: ['eps', 'bvps'] },
+  { id: 'LYNCH_FAIR_VALUE', title: 'Peter Lynch Fair Value', abbreviation: 'Lynch FV', formula: 'EPS × (Growth × 100)', required: ['eps', 'epsGrowthRate'] }
+];
+
 @Injectable({
   providedIn: 'root'
 })
 export class StockValuationService {
   private apiUrl = 'http://localhost:8080/api/metrics';
+  private candidatesApiUrl = 'http://localhost:8080/api/candidates';
 
   constructor(private http: HttpClient) { }
   // ==========================================
@@ -92,6 +137,15 @@ export class StockValuationService {
 
   calculateMetricValue(path: MetricValuePath, req: SummaryRequest): Observable<number> {
     return this.http.post<number>(`${this.apiUrl}/${path}`, req);
+  }
+
+  // ==========================================
+  // Candidates Orchestration API
+  // ==========================================
+
+  getTopCandidates(limit: number = 20): Observable<TopCandidateResponse[]> {
+    const params = limit ? { limit: limit.toString() } : undefined;
+    return this.http.get<TopCandidateResponse[]>(`${this.candidatesApiUrl}/top`, { params });
   }
 }
 
