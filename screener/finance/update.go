@@ -19,15 +19,21 @@ const baseURL = "https://www.sec.gov/data-research/sec-markets-data/financial-st
 // quarter's data set misses filings that a few quarters together cover.
 const latestQuarterCount = 4
 
-func CalculateTopCompanies(resourcesDir string, n int) error {
+// CalculateTopCompanies runs the full SEC ingestion pipeline: download the
+// latest quarterly data sets, reduce them to one 10-K per company, extract
+// fundamentals, derive metrics, and apply the hard filter and quality score.
+// It returns the resulting candidates and the most recent quarter covered,
+// for the caller to persist — this package stays free of any database
+// dependency so it can be unit-tested without one, as it has been all along.
+func CalculateTopCompanies(resourcesDir string) ([]Candidate, string, error) {
 	err := updateLatestStatements(baseURL, resourcesDir)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	zipPaths, err := filepath.Glob(filepath.Join(resourcesDir, "*.zip"))
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	var submissions []Submission
@@ -45,7 +51,7 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 
 	fundamentals, err := ExtractFundamentals(resourcesDir, latest)
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 	slog.Info("extracted fundamentals", "companies", len(fundamentals))
 
@@ -60,14 +66,23 @@ func CalculateTopCompanies(resourcesDir string, n int) error {
 	ComputeQualityScores(candidates)
 
 	passing := 0
+	var latestQuarter string
 	for _, c := range candidates {
 		if c.PassesHardFilter {
 			passing++
 		}
 	}
+	for _, sub := range latest {
+		// SourceZip is "YYYYqQ" (e.g. "2026q2"), fixed-width enough that
+		// plain string comparison sorts it chronologically, same trick as
+		// the Filed-date comparison in latestTenKByCIK.
+		if sub.SourceZip > latestQuarter {
+			latestQuarter = sub.SourceZip
+		}
+	}
 	slog.Info("applied hard filters", "companies", len(candidates), "passing", passing)
 
-	return nil
+	return candidates, latestQuarter, nil
 }
 
 // updateLatestStatements finds the newest latestQuarterCount SEC financial
