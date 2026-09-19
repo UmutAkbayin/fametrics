@@ -18,19 +18,19 @@ metrics sandbox and an educational metric explorer.
 ┌──────────────┐  bulk 10-K data   ┌──────────────┐
 │  SEC EDGAR   │ ────────────────► │              │
 └──────────────┘                   │   screener   │  Go · Postgres
-                                    │              │  ingest → hard-filter →
-                                    │              │  quality_score
-                                    └──────┬───────┘
+                                   │              │  ingest → hard-filter →
+                                   │              │  quality_score
+                                   └───────┬──────┘
                                            │ GET /candidates
                                            ▼
 ┌──────────────┐   ticker lookup   ┌──────────────┐
 │  SEC (free   │ ◄──────────────── │              │
 │  ticker file)│                   │     core     │  Java 25 · Spring Boot 4
 └──────────────┘                   │              │  (stateless, no DB yet)
-                                    │              │  price + rank + the
+                                   │              │  price + rank + the
 ┌──────────────┐   live price      │              │  existing valuation engine
 │     FMP      │ ◄──────────────── │              │
-└──────────────┘                   └──────┬───────┘
+└──────────────┘                   └───────┬──────┘
                                            │ GET /api/candidates/top
                                            │ POST /api/metrics/...
                                            ▼
