@@ -82,13 +82,6 @@ are stateless. The frontend's Top Candidates view needs the full chain
    ```
    Then open `http://localhost:4200`. See [`frontend/README.md`](frontend/README.md).
 
-`.env` support differs by language: the Go `screener` loads a `.env` file
-itself on startup (`godotenv`), so `cp .env.example .env` there is enough.
-Spring Boot has no built-in `.env` support, so `core`'s env vars need to
-actually land in the process environment some other way — a real `export`,
-an IDE run configuration, or a plugin like IntelliJ's EnvFile reading a local
-`.env` — not just exist in a file sitting in the directory.
-
 `core` degrades gracefully rather than failing outright if `screener`, SEC,
 or FMP are unreachable when it starts or while running — scheduled background
 refreshes retry automatically, and `/api/candidates/top` returns a `503`
